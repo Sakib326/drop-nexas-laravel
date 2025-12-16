@@ -12,4 +12,8 @@ Route::middleware(['web', 'customer'])
         Route::get('/products', [AffiliateController::class, 'products'])->name('products');
         Route::get('/downline', [AffiliateController::class, 'downline'])->name('downline');
         Route::get('/downline/{username}/children', [AffiliateController::class, 'getChildReferrals'])->name('downline.children');
+        Route::get('/commissions', [AffiliateController::class, 'commissions'])->name('commissions');
+        Route::get('/withdrawals', [AffiliateController::class, 'withdrawals'])->name('withdrawals');
+        Route::get('/withdrawal-request', [AffiliateController::class, 'withdrawalRequest'])->name('withdrawal.request');
+        Route::post('/withdrawal-request', [AffiliateController::class, 'storeWithdrawalRequest'])->name('withdrawal.store');
     });

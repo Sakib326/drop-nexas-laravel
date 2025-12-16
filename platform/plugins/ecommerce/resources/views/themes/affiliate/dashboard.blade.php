@@ -27,6 +27,18 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ route('affiliate.commissions') }}">
+                                <i class="fi-rs-dollar"></i>
+                                {{ __('Commissions') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('affiliate.withdrawals') }}">
+                                <i class="fi-rs-bank"></i>
+                                {{ __('Withdrawals') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('customer.overview') }}">
                                 <i class="fi-rs-user"></i>
                                 {{ __('My Account') }}
@@ -57,19 +69,57 @@
                                 </div>
                             </div>
 
+                            {{-- Balance Cards --}}
                             <div class="row mb-4">
-                                <div class="col-lg-4 col-md-6 mb-4">
-                                    <div class="dashboard-stat-card">
+                                <div class="col-lg-3 col-md-6 mb-4">
+                                    <div class="dashboard-stat-card bg-success text-white">
+                                        <div class="card-icon">
+                                            <i class="fi-rs-wallet"></i>
+                                        </div>
+                                        <div class="card-info">
+                                            <h4>{{ format_price($availableBalance) }}</h4>
+                                            <p>{{ __('Available Balance') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-4">
+                                    <div class="dashboard-stat-card bg-primary text-white">
                                         <div class="card-icon">
                                             <i class="fi-rs-dollar"></i>
                                         </div>
                                         <div class="card-info">
-                                            <h4>$0.00</h4>
-                                            <p class="text-muted">{{ __('Total Earnings') }}</p>
+                                            <h4>{{ format_price($totalEarned) }}</h4>
+                                            <p>{{ __('Total Earned') }}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="col-lg-3 col-md-6 mb-4">
+                                    <div class="dashboard-stat-card bg-warning text-white">
+                                        <div class="card-icon">
+                                            <i class="fi-rs-time"></i>
+                                        </div>
+                                        <div class="card-info">
+                                            <h4>{{ format_price($pendingCommissions) }}</h4>
+                                            <p>{{ __('Pending Commissions') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-4">
+                                    <div class="dashboard-stat-card bg-secondary text-white">
+                                        <div class="card-icon">
+                                            <i class="fi-rs-bank"></i>
+                                        </div>
+                                        <div class="card-info">
+                                            <h4>{{ format_price($totalWithdrawn) }}</h4>
+                                            <p>{{ __('Total Withdrawn') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Stats Cards --}}
+                            <div class="row mb-4">
+                                <div class="col-lg-6 col-md-6 mb-4">
                                     <div class="dashboard-stat-card">
                                         <div class="card-icon">
                                             <i class="fi-rs-users"></i>
@@ -80,14 +130,14 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="col-lg-6 col-md-6 mb-4">
                                     <div class="dashboard-stat-card">
                                         <div class="card-icon">
                                             <i class="fi-rs-shopping-cart"></i>
                                         </div>
                                         <div class="card-info">
-                                            <h4>0</h4>
-                                            <p class="text-muted">{{ __('Successful Sales') }}</p>
+                                            <h4>{{ format_price($customer->total_sale_value ?? 0) }}</h4>
+                                            <p class="text-muted">{{ __('Total Sales Value') }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -169,6 +219,36 @@
     .affiliate-dashboard-page .dashboard-stat-card .card-info p {
         margin: 5px 0 0;
         font-size: 14px;
+    }
+
+    .affiliate-dashboard-page .dashboard-stat-card.bg-success .card-icon {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .affiliate-dashboard-page .dashboard-stat-card.bg-primary .card-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .affiliate-dashboard-page .dashboard-stat-card.bg-warning .card-icon {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .affiliate-dashboard-page .dashboard-stat-card.bg-secondary .card-icon {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .affiliate-dashboard-page .dashboard-stat-card.bg-success .card-info h4,
+    .affiliate-dashboard-page .dashboard-stat-card.bg-primary .card-info h4,
+    .affiliate-dashboard-page .dashboard-stat-card.bg-warning .card-info h4,
+    .affiliate-dashboard-page .dashboard-stat-card.bg-secondary .card-info h4 {
+        color: #fff;
+    }
+
+    .affiliate-dashboard-page .dashboard-stat-card.bg-success .card-info p,
+    .affiliate-dashboard-page .dashboard-stat-card.bg-primary .card-info p,
+    .affiliate-dashboard-page .dashboard-stat-card.bg-warning .card-info p,
+    .affiliate-dashboard-page .dashboard-stat-card.bg-secondary .card-info p {
+        color: rgba(255, 255, 255, 0.9);
     }
 
     .affiliate-dashboard-page .welcome-msg {

@@ -55,6 +55,10 @@ class Customer extends BaseModel implements
         'private_notes',
         'username',
         'referral_username',
+        'available_balance',
+        'total_earned',
+        'total_withdrawn',
+        'total_sale_value',
     ];
 
     protected $hidden = [
@@ -187,6 +191,26 @@ class Customer extends BaseModel implements
     public function deletionRequest(): HasOne
     {
         return $this->hasOne(CustomerDeletionRequest::class, 'customer_id');
+    }
+
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(\App\Models\AffiliateCommission::class, 'customer_id');
+    }
+
+    public function withdrawals(): HasMany
+    {
+        return $this->hasMany(\App\Models\AffiliateWithdrawal::class, 'customer_id');
+    }
+
+    public function pendingCommissions(): HasMany
+    {
+        return $this->commissions()->where('status', 'pending');
+    }
+
+    public function approvedCommissions(): HasMany
+    {
+        return $this->commissions()->where('status', 'approved');
     }
 
     protected function avatarUrl(): Attribute
