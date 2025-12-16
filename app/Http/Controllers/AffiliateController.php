@@ -53,7 +53,9 @@ class AffiliateController extends Controller
 
         $query = Product::query()
             ->where('status', 'published')
-            ->where('is_variation', 0);
+            ->where('is_variation', 0)
+            ->whereNotNull('cost_per_item')
+            ->where('cost_per_item', '>', 0);
 
         // Apply filters
         if ($request->has('search') && $request->search) {
@@ -64,6 +66,19 @@ class AffiliateController extends Controller
             $query->whereHas('categories', function ($q) use ($request) {
                 $q->where('ec_product_categories.id', $request->category);
             });
+        }
+
+        // Apply sorting
+        if ($request->has('sort') && $request->sort) {
+            if ($request->sort == 'profit_high') {
+                // Sort by profit (high to low): (sale_price or price - cost_per_item) DESC
+                $query->orderByRaw('((CASE WHEN sale_price > 0 THEN sale_price ELSE price END) - cost_per_item) DESC');
+            } elseif ($request->sort == 'profit_low') {
+                // Sort by profit (low to high): (sale_price or price - cost_per_item) ASC
+                $query->orderByRaw('((CASE WHEN sale_price > 0 THEN sale_price ELSE price END) - cost_per_item) ASC');
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
         }
 
         $products = $query->with(['categories', 'productCollections'])

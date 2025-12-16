@@ -51,12 +51,12 @@
                             {{-- Filters --}}
                             <form method="GET" class="mb-4">
                                 <div class="row">
-                                    <div class="col-md-5">
+                                    <div class="col-md-4">
                                         <input type="text" name="search" class="form-control"
                                             placeholder="{{ __('Search products...') }}"
                                             value="{{ request('search') }}">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <select name="category" class="form-control">
                                             <option value="">{{ __('All Categories') }}</option>
                                             @foreach ($categories as $category)
@@ -68,6 +68,19 @@
                                         </select>
                                     </div>
                                     <div class="col-md-3">
+                                        <select name="sort" class="form-control">
+                                            <option value="">{{ __('Sort by') }}</option>
+                                            <option value="profit_high"
+                                                {{ request('sort') == 'profit_high' ? 'selected' : '' }}>
+                                                {{ __('Profit: High to Low') }}
+                                            </option>
+                                            <option value="profit_low"
+                                                {{ request('sort') == 'profit_low' ? 'selected' : '' }}>
+                                                {{ __('Profit: Low to High') }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
                                         <button type="submit" class="btn btn-primary w-100">
                                             <i class="fi-rs-filter"></i> {{ __('Filter') }}
                                         </button>
@@ -113,13 +126,23 @@
                                                             $product->sale_price > 0
                                                                 ? $product->sale_price
                                                                 : $product->price;
-                                                        $profit = ($price - $cost) * 0.5;
+                                                        $profit = 0;
+
+                                                        if ($cost > 0 && $price > $cost) {
+                                                            $profit = ($price - $cost) * 0.5;
+                                                        }
                                                     @endphp
-                                                    <span class="text-success">
-                                                        <strong>{{ format_price($profit) }}</strong>
-                                                    </span>
-                                                    <br>
-                                                    <small class="text-muted">(50% {{ __('commission') }})</small>
+                                                    @if ($profit > 0)
+                                                        <span class="text-success">
+                                                            <strong>{{ format_price($profit) }}</strong>
+                                                        </span>
+                                                        <br>
+                                                        <small class="text-muted">(50% {{ __('commission') }})</small>
+                                                    @else
+                                                        <span class="text-muted">
+                                                            <small>{{ __('No commission') }}</small>
+                                                        </span>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     <button class="btn btn-sm btn-primary copy-url-btn"
