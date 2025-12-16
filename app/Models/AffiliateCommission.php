@@ -74,4 +74,20 @@ class AffiliateCommission extends Model
     {
         return $query->where('status', 'approved');
     }
+
+    /**
+     * Scope to filter reversed commissions
+     */
+    public function scopeReversed($query)
+    {
+        return $query->where('status', 'reversed');
+    }
+
+    /**
+     * Scope to exclude reversed commissions
+     */
+    public function scopeNotReversed($query)
+    {
+        return $query->where('status', '!=', 'reversed');
+    }
 }

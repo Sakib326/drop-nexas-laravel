@@ -111,6 +111,7 @@ class CommissionService
 
     /**
      * Reverse commissions for an order
+     * Creates negative commission records instead of deleting to maintain audit trail
      */
     public function reverseCommissions(Order $order): bool
     {
@@ -118,26 +119,50 @@ class CommissionService
             DB::beginTransaction();
 
             // Get all commissions for this order
-            $commissions = AffiliateCommission::where('order_id', $order->id)->get();
+            $commissions = AffiliateCommission::where('order_id', $order->id)
+                ->where('status', '!=', 'reversed')
+                ->get();
 
             foreach ($commissions as $commission) {
                 $customer = $commission->customer;
 
                 if ($customer) {
-                    // Reverse balance changes
+                    // Create negative commission record for reversal (keep audit trail)
+                    AffiliateCommission::create([
+                        'customer_id' => $commission->customer_id,
+                        'order_id' => $commission->order_id,
+                        'product_id' => $commission->product_id,
+                        'commission_type' => $commission->commission_type . '_reversal',
+                        'commission_rate' => $commission->commission_rate,
+                        'commission_amount' => -$commission->commission_amount, // Negative amount
+                        'order_amount' => $commission->order_amount,
+                        'profit_amount' => $commission->profit_amount,
+                        'status' => 'reversed',
+                        'notes' => "Reversal of commission #{$commission->id} due to order status change",
+                    ]);
+
+                    // Reverse balance changes (allow negative balance)
                     $customer->decrement('lifetime_earnings', $commission->commission_amount);
 
                     if ($commission->status === 'approved' || $commission->status === 'paid') {
-                        $customer->decrement('available_balance', $commission->commission_amount);
-                        $customer->decrement('total_earned', $commission->commission_amount);
+                        // Deduct from available_balance (can go negative)
+                        $customer->available_balance -= $commission->commission_amount;
+                        $customer->total_earned -= $commission->commission_amount;
+                        $customer->save();
                     }
 
                     // Recalculate user level
                     $this->updateCustomerLevel($customer);
+
+                    Log::info("Commission reversed for customer #{$customer->id}", [
+                        'original_commission' => $commission->commission_amount,
+                        'new_available_balance' => $customer->available_balance,
+                        'balance_is_negative' => $customer->available_balance < 0
+                    ]);
                 }
 
-                // Delete commission record
-                $commission->delete();
+                // Mark original commission as reversed (keep it for history)
+                $commission->update(['status' => 'reversed']);
             }
 
             // Mark as not distributed
