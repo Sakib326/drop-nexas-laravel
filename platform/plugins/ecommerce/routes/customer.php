@@ -8,9 +8,28 @@ use Botble\Ecommerce\Http\Controllers\Customers\UploadProofController;
 use Botble\Ecommerce\Http\Controllers\Fronts\AccountDeletionController;
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\CommissionController;
+use App\Http\Controllers\Admin\WithdrawalController;
 
 AdminHelper::registerRoutes(
     function (): void {
+        // Commission Management Routes
+        Route::group(['prefix' => 'commissions', 'as' => 'admin.commissions.', 'permission' => 'customers.index'], function (): void {
+            Route::get('/', [CommissionController::class, 'index'])->name('index');
+            Route::get('/user/{customerId}/history', [CommissionController::class, 'userCommissions'])->name('user-history');
+            Route::get('/user/{customerId}/hierarchy', [CommissionController::class, 'userHierarchy'])->name('user-hierarchy');
+            Route::get('/user/{customerId}/balance', [CommissionController::class, 'userBalance'])->name('user-balance');
+        });
+
+        // Withdrawal Management Routes
+        Route::group(['prefix' => 'withdrawals', 'as' => 'admin.withdrawals.', 'permission' => 'customers.index'], function (): void {
+            Route::get('/', [WithdrawalController::class, 'index'])->name('index');
+            Route::get('/user/{customerId}/history', [WithdrawalController::class, 'userWithdrawals'])->name('user-history');
+            Route::get('/{id}/edit', [WithdrawalController::class, 'edit'])->name('edit');
+            Route::put('/{id}/update-status', [WithdrawalController::class, 'updateStatus'])->name('update-status');
+            Route::post('/bulk-update', [WithdrawalController::class, 'bulkUpdate'])->name('bulk-update');
+        });
+
         Route::group(['namespace' => 'Botble\Ecommerce\Http\Controllers\Customers'], function (): void {
             Route::group(['prefix' => 'customers', 'as' => 'customers.'], function (): void {
                 Route::resource('', 'CustomerController')->parameters(['' => 'customer']);
