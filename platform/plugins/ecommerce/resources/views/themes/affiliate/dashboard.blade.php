@@ -4,9 +4,18 @@
 
 <div class="page-content pt-50 pb-150 affiliate-dashboard-page">
     <div class="container">
+        {{-- Mobile Menu Toggle --}}
+        <button class="mobile-menu-toggle d-md-none mb-3" id="mobileMenuToggle">
+            <i class="fi-rs-menu-burger"></i>
+            <span>{{ __('Menu') }}</span>
+        </button>
+
+        {{-- Overlay for mobile menu --}}
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
         <div class="row">
             <div class="col-md-3">
-                <div class="dashboard-menu">
+                <div class="dashboard-menu" id="dashboardMenu">
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link active" href="{{ route('affiliate.dashboard') }}">
@@ -177,6 +186,8 @@
     </div>
 </div>
 
+@include('plugins/ecommerce::themes.affiliate.affiliate-responsive')
+
 <style>
     .affiliate-dashboard-page .dashboard-stat-card {
         background: #fff;
@@ -289,3 +300,35 @@
         font-weight: 600;
     }
 </style>
+
+<script>
+    // Mobile Menu Toggle Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('mobileMenuToggle');
+        const menu = document.getElementById('dashboardMenu');
+        const overlay = document.getElementById('mobileMenuOverlay');
+
+        if (toggleBtn && menu && overlay) {
+            // Open menu on toggle button click
+            toggleBtn.addEventListener('click', function() {
+                menu.classList.add('active');
+                overlay.classList.add('active');
+            });
+
+            // Close menu on overlay click
+            overlay.addEventListener('click', function() {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+
+            // Close menu when clicking on a menu link
+            const menuLinks = menu.querySelectorAll('a');
+            menuLinks.forEach(function(link) {
+                link.addEventListener('click', function() {
+                    menu.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            });
+        }
+    });
+</script>

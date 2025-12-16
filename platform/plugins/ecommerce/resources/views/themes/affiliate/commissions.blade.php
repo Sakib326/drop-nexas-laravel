@@ -4,9 +4,18 @@
 
 <div class="page-content pt-50 pb-150 affiliate-dashboard-page">
     <div class="container">
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle d-md-none mb-3" id="mobileMenuToggle">
+            <i class="fi-rs-menu-burger"></i>
+            <span class="ms-2">Menu</span>
+        </button>
+
+        <!-- Mobile Overlay -->
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
         <div class="row">
             <div class="col-md-3">
-                <div class="dashboard-menu">
+                <div class="dashboard-menu" id="dashboardMenu">
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('affiliate.dashboard') }}">
@@ -105,7 +114,7 @@
                                             value="{{ request('to') }}" placeholder="{{ __('To') }}">
                                     </div>
                                     <div class="col-md-2">
-                                        <button type="submit" class="btn btn-primary w-100">
+                                        <button type="submit" class="btn btn-primary w-100 btn-mobile-full">
                                             <i class="fi-rs-filter"></i> {{ __('Filter') }}
                                         </button>
                                     </div>
@@ -196,3 +205,33 @@
         </div>
     </div>
 </div>
+
+@include('plugins/ecommerce::themes.affiliate.affiliate-responsive')
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('mobileMenuToggle');
+        const menu = document.getElementById('dashboardMenu');
+        const overlay = document.getElementById('mobileMenuOverlay');
+
+        if (toggleBtn && menu && overlay) {
+            toggleBtn.addEventListener('click', function() {
+                menu.classList.add('active');
+                overlay.classList.add('active');
+            });
+
+            overlay.addEventListener('click', function() {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+
+            const menuLinks = menu.querySelectorAll('a');
+            menuLinks.forEach(function(link) {
+                link.addEventListener('click', function() {
+                    menu.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            });
+        }
+    });
+</script>
