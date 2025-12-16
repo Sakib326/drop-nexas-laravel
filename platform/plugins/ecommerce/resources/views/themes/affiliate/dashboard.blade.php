@@ -126,6 +126,78 @@
                                 </div>
                             </div>
 
+                            {{-- User Level Card --}}
+                            <div class="row mb-4">
+                                <div class="col-lg-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <div>
+                                                    <h5 class="mb-1">{{ __('Your Level') }}</h5>
+                                                    <span
+                                                        class="badge bg-{{ $customer->getLevelBadgeColor() }} fs-5 px-3 py-2">
+                                                        {{ $customer->level_name }} (Level {{ $customer->level }})
+                                                    </span>
+                                                </div>
+                                                <div class="text-end">
+                                                    <h6 class="mb-1">{{ __('Lifetime Earnings') }}</h6>
+                                                    <h4 class="text-primary mb-0">
+                                                        {{ format_price($customer->lifetime_earnings) }}</h4>
+                                                </div>
+                                            </div>
+
+                                            @php
+                                                $nextThreshold = $customer->getNextLevelThreshold();
+                                                $progress = $customer->getNextLevelProgress();
+                                            @endphp
+
+                                            @if ($nextThreshold)
+                                                <div class="mt-3">
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <small
+                                                            class="text-muted">{{ __('Progress to next level') }}</small>
+                                                        <small
+                                                            class="text-muted">{{ format_price($nextThreshold) }}</small>
+                                                    </div>
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar bg-{{ $customer->getLevelBadgeColor() }}"
+                                                            role="progressbar" style="width: {{ $progress }}%"
+                                                            aria-valuenow="{{ $progress }}" aria-valuemin="0"
+                                                            aria-valuemax="100">
+                                                            {{ number_format($progress, 1) }}%
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-success mt-3 mb-0">
+                                                    <i class="fi-rs-trophy"></i>
+                                                    {{ __('Congratulations! You have reached the highest level.') }}
+                                                </div>
+                                            @endif
+
+                                            {{-- Pool Eligibility --}}
+                                            <div class="mt-3">
+                                                @if ($customer->isEmpireBuilderEligible())
+                                                    <span class="badge bg-danger me-2">
+                                                        <i class="fi-rs-crown"></i>
+                                                        {{ __('Empire Builder Pool Member') }}
+                                                    </span>
+                                                    <span class="badge bg-success">
+                                                        <i class="fi-rs-star"></i>
+                                                        {{ __('Global Thrive Pool Member') }}
+                                                    </span>
+                                                @elseif($customer->isGlobalThriveEligible())
+                                                    <span class="badge bg-success">
+                                                        <i class="fi-rs-star"></i>
+                                                        {{ __('Global Thrive Pool Member') }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Stats Cards --}}
                             <div class="row mb-4">
                                 <div class="col-lg-6 col-md-6 mb-4">

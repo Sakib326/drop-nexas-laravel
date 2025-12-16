@@ -48,12 +48,14 @@ class Order extends BaseModel
         'completed_at',
         'proof_file',
         'private_notes',
+        'is_commission_distributed',
     ];
 
     protected $casts = [
         'status' => OrderStatusEnum::class,
         'shipping_method' => ShippingMethodEnum::class,
         'completed_at' => 'datetime',
+        'is_commission_distributed' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -71,6 +73,54 @@ class Order extends BaseModel
         });
 
         static::creating(fn (Order $order) => $order->code = static::generateUniqueCode());
+
+        // Commission distribution on order completion
+        static::updated(function (Order $order) {
+            $commissionService = app(\App\Services\CommissionService::class);
+
+            // Get the original status before the update (as string)
+            $originalStatus = $order->getOriginal('status');
+            $newStatus = $order->status;
+
+            \Illuminate\Support\Facades\Log::info("Order #{$order->id} updated - Original: {$originalStatus}, New: {$newStatus}");
+
+            // Check if status changed to "completed"
+            if ($originalStatus != OrderStatusEnum::COMPLETED && $newStatus == OrderStatusEnum::COMPLETED) {
+                if (!$order->is_commission_distributed) {
+                    try {
+                        \Illuminate\Support\Facades\Log::info("Order #{$order->id} completed, distributing commissions");
+                        $commissionService->distributeCommissions($order);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Failed to distribute commissions for order #{$order->id}: " . $e->getMessage());
+                    }
+                }
+            }
+
+            // Check if status changed FROM "completed" to something else
+            if ($originalStatus == OrderStatusEnum::COMPLETED && $newStatus != OrderStatusEnum::COMPLETED) {
+                if ($order->is_commission_distributed) {
+                    try {
+                        \Illuminate\Support\Facades\Log::info("Order #{$order->id} status changed from completed, reversing commissions");
+                        $commissionService->reverseCommissions($order);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Failed to reverse commissions for order #{$order->id}: " . $e->getMessage());
+                    }
+                }
+            }
+        });
+
+        // Handle orders created as completed
+        static::created(function (Order $order) {
+            if ($order->status == OrderStatusEnum::COMPLETED && !$order->is_commission_distributed) {
+                try {
+                    $commissionService = app(\App\Services\CommissionService::class);
+                    \Illuminate\Support\Facades\Log::info("Order #{$order->id} created as completed, distributing commissions");
+                    $commissionService->distributeCommissions($order);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to distribute commissions for new order #{$order->id}: " . $e->getMessage());
+                }
+            }
+        });
     }
 
     public function user(): BelongsTo

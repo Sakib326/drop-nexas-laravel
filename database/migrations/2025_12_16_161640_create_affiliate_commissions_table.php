@@ -15,9 +15,9 @@ return new class () extends Migration {
             $table->unsignedBigInteger('customer_id');
             $table->unsignedBigInteger('order_id')->nullable();
             $table->unsignedBigInteger('product_id')->nullable();
-            $table->enum('commission_type', ['direct_sale', 'downline_level_1', 'downline_level_2', 'downline_level_3']);
-            $table->decimal('product_price', 15, 2)->default(0);
-            $table->decimal('product_cost', 15, 2)->default(0);
+            $table->string('commission_type', 50); // referral_level_1, referral_level_2, etc., referral_level_6_plus, global_thrive_pool, empire_builder_pool
+            $table->decimal('order_amount', 15, 2)->default(0);
+            $table->decimal('profit_amount', 15, 2)->default(0);
             $table->decimal('commission_rate', 5, 2)->default(0); // e.g., 50.00 for 50%
             $table->decimal('commission_amount', 15, 2)->default(0);
             $table->enum('status', ['pending', 'approved', 'rejected', 'paid', 'returned'])->default('pending');

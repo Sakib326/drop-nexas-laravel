@@ -59,6 +59,9 @@ class Customer extends BaseModel implements
         'total_earned',
         'total_withdrawn',
         'total_sale_value',
+        'lifetime_earnings',
+        'level',
+        'level_name',
     ];
 
     protected $hidden = [
@@ -211,6 +214,79 @@ class Customer extends BaseModel implements
     public function approvedCommissions(): HasMany
     {
         return $this->commissions()->where('status', 'approved');
+    }
+
+    /**
+     * Get user level badge color
+     */
+    public function getLevelBadgeColor(): string
+    {
+        return match($this->level) {
+            1 => 'secondary',  // Spark
+            2 => 'info',       // Flare
+            3 => 'primary',    // Pathfinder
+            4 => 'success',    // Global Thrive
+            5 => 'warning',    // Galaxy Pulse
+            6 => 'danger',     // Empire Builder
+            default => 'secondary',
+        };
+    }
+
+    /**
+     * Check if user is eligible for Global Thrive pool
+     */
+    public function isGlobalThriveEligible(): bool
+    {
+        return in_array($this->level, [4, 5, 6]);
+    }
+
+    /**
+     * Check if user is eligible for Empire Builder pool
+     */
+    public function isEmpireBuilderEligible(): bool
+    {
+        return $this->level === 6;
+    }
+
+    /**
+     * Get next level threshold
+     */
+    public function getNextLevelThreshold(): ?float
+    {
+        $levels = [
+            1 => 100000,
+            2 => 1000000,
+            3 => 10000000,
+            4 => 100000000,
+            5 => 1000000000,
+        ];
+
+        return $levels[$this->level] ?? null;
+    }
+
+    /**
+     * Get progress to next level (percentage)
+     */
+    public function getNextLevelProgress(): ?float
+    {
+        $nextThreshold = $this->getNextLevelThreshold();
+        if (!$nextThreshold) {
+            return null; // Already at max level
+        }
+
+        $currentThreshold = match($this->level) {
+            1 => 0,
+            2 => 100000,
+            3 => 1000000,
+            4 => 10000000,
+            5 => 100000000,
+            default => 0,
+        };
+
+        $range = $nextThreshold - $currentThreshold;
+        $progress = $this->lifetime_earnings - $currentThreshold;
+
+        return min(100, max(0, ($progress / $range) * 100));
     }
 
     protected function avatarUrl(): Attribute
