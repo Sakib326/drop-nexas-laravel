@@ -901,6 +901,24 @@ class EcommerceServiceProvider extends ServiceProvider
                     'url' => fn () => route('customers.index'),
                     'permissions' => ['customers.index'],
                 ])
+                ->registerItem([
+                    'id' => 'cms-plugins-affiliate-commissions',
+                    'priority' => 195,
+                    'parent_id' => 'cms-plugins-ecommerce',
+                    'name' => 'Commissions',
+                    'icon' => 'ti ti-coins',
+                    'url' => fn () => route('admin.commissions.index'),
+                    'permissions' => ['customers.index'],
+                ])
+                ->registerItem([
+                    'id' => 'cms-plugins-affiliate-withdrawals',
+                    'priority' => 196,
+                    'parent_id' => 'cms-plugins-ecommerce',
+                    'name' => 'Withdrawals',
+                    'icon' => 'ti ti-cash',
+                    'url' => fn () => route('admin.withdrawals.index'),
+                    'permissions' => ['customers.index'],
+                ])
                 ->when(EcommerceHelper::isProductSpecificationEnabled(), function (DashboardMenuSupport $dashboardMenu): void {
                     $dashboardMenu
                         ->registerItem([
