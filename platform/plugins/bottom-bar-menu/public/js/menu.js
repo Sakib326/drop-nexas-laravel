@@ -1,1 +1,26 @@
-$(document).ready((function(){var e=$(".trigger-mobile-menu"),i=$(".mobile-menu-close"),o=$(".mobile-header-active"),l=$("body");l.prepend('<div class="body-overlay-1"></div>'),e.on("click",(function(e){e.preventDefault(),o.addClass("sidebar-visible"),l.addClass("mobile-menu-active")})),i.on("click",(function(){o.removeClass("sidebar-visible"),l.removeClass("mobile-menu-active")})),$(".body-overlay-1").on("click",(function(){o.removeClass("sidebar-visible"),l.removeClass("mobile-menu-active")}))}));
+/******/ (() => { // webpackBootstrap
+/*!**********************************************************************!*\
+  !*** ./platform/plugins/bottom-bar-menu/resources/assets/js/menu.js ***!
+  \**********************************************************************/
+$(document).ready(function () {
+  var navbarTrigger = $('.trigger-mobile-menu'),
+    endTrigger = $('.mobile-menu-close'),
+    container = $('.mobile-header-active'),
+    wrapper4 = $('body');
+  wrapper4.prepend('<div class="body-overlay-1"></div>');
+  navbarTrigger.on('click', function (e) {
+    e.preventDefault();
+    container.addClass('sidebar-visible');
+    wrapper4.addClass('mobile-menu-active');
+  });
+  endTrigger.on('click', function () {
+    container.removeClass('sidebar-visible');
+    wrapper4.removeClass('mobile-menu-active');
+  });
+  $('.body-overlay-1').on('click', function () {
+    container.removeClass('sidebar-visible');
+    wrapper4.removeClass('mobile-menu-active');
+  });
+});
+/******/ })()
+;

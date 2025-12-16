@@ -1,7 +1,7 @@
 <footer class="main">
     {!! dynamic_sidebar('pre_footer_sidebar') !!}
 
-    @if($footerSidebar = dynamic_sidebar('footer_sidebar'))
+    @if ($footerSidebar = dynamic_sidebar('footer_sidebar'))
         <section class="section-padding footer-mid">
             <div class="container pt-15 pb-20">
                 <div class="row">
@@ -10,12 +10,12 @@
             </div>
         </section>
     @endif
-    <div class="container pb-30  wow animate__animated animate__fadeInUp"  data-wow-delay="0">
+    <div class="container pb-30  wow animate__animated animate__fadeInUp" data-wow-delay="0">
         <div class="row align-items-center">
             <div class="col-12 mb-30">
                 <div class="footer-bottom"></div>
             </div>
-            @if($copyright = Theme::getSiteCopyright())
+            @if ($copyright = Theme::getSiteCopyright())
                 <div class="col-xl-4 col-lg-6 col-md-6">
                     <p class="font-sm mb-0">{!! BaseHelper::clean($copyright) !!}</p>
                 </div>
@@ -24,25 +24,32 @@
                 <div class="col-xl-4 col-lg-6 text-center d-none d-xl-block">
                     <div class="hotline d-lg-inline-flex w-full align-items-center justify-content-center">
                         <img src="{{ Theme::asset()->url('imgs/theme/icons/phone-call.svg') }}" alt="hotline" />
-                        <p>{{ $hotline }} <span>{{ theme_option('hotline_subtitle_text') ?: __('24/7 Support Center') }}</span></p>
+                        <p>{{ $hotline }}
+                            <span>{{ theme_option('hotline_subtitle_text') ?: __('24/7 Support Center') }}</span>
+                        </p>
                     </div>
                 </div>
             @endif
             @if ($socialLinks = theme_option('social_links'))
-                @if($socialLinks = json_decode($socialLinks, true))
-                    <div @class(['col-lg-6 text-end d-none d-md-block', 'col-xl-4' => $hotline, 'col-xl-8' => ! $hotline])>
+                @if ($socialLinks = json_decode($socialLinks, true))
+                    <div @class([
+                        'col-lg-6 text-end d-none d-md-block',
+                        'col-xl-4' => $hotline,
+                        'col-xl-8' => !$hotline,
+                    ])>
                         <div class="mobile-social-icon">
                             <p class="font-heading h6 me-2">{{ __('Follow Us') }}</p>
-                            @foreach($socialLinks as $socialLink)
+                            @foreach ($socialLinks as $socialLink)
                                 @if (count($socialLink) == 3)
-                                    <a href="{{ $socialLink[2]['value'] }}"
-                                       title="{{ $socialLink[0]['value'] }}">
+                                    <a href="{{ $socialLink[2]['value'] }}" title="{{ $socialLink[0]['value'] }}">
                                         {{ RvMedia::image($socialLink[1]['value'], $socialLink[0]['value']) }}
                                     </a>
                                 @endif
                             @endforeach
                         </div>
-                        <p class="font-sm">{{ theme_option('subscribe_social_description', __('Up to 15% discount on your first subscribe')) }}</p>
+                        <p class="font-sm">
+                            {{ theme_option('subscribe_social_description', __('Up to 15% discount on your first subscribe')) }}
+                        </p>
                     </div>
                 @endif
             @endif
@@ -50,7 +57,8 @@
     </div>
 </footer>
 
-<div class="modal fade custom-modal" id="quick-view-modal" tabindex="-1" aria-labelledby="quick-view-modal-label" role="dialog" aria-hidden="true">
+<div class="modal fade custom-modal" id="quick-view-modal" tabindex="-1" aria-labelledby="quick-view-modal-label"
+    role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -64,3 +72,5 @@
         </div>
     </div>
 </div>
+
+<script src="{{ Theme::asset()->url('js/referral-tracker.js') }}"></script>
