@@ -249,6 +249,10 @@ class AffiliateController extends Controller
 
         DB::beginTransaction();
         try {
+            // Deduct balance immediately when withdrawal is requested
+            $customer->available_balance -= $request->amount;
+            $customer->save();
+
             AffiliateWithdrawal::create([
                 'customer_id' => $customer->id,
                 'amount' => $request->amount,
