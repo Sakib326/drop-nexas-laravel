@@ -48,6 +48,23 @@ class RegisterForm extends AuthForm
                     ->placeholder(__('Your full name'))
                     ->icon('ti ti-user')
             )
+            ->add(
+                'username',
+                TextField::class,
+                TextFieldOption::make()
+                    ->label(__('Username'))
+                    ->placeholder(__('Choose a unique username'))
+                    ->icon('ti ti-at')
+                    ->helperText(__('This will be your unique identifier'))
+            )
+            ->add(
+                'referral_username',
+                TextField::class,
+                TextFieldOption::make()
+                    ->label(__('Referral Username (Optional)'))
+                    ->placeholder(__('Enter referrer username if you have one'))
+                    ->icon('ti ti-users')
+            )
             ->when(! EcommerceHelper::isLoginUsingPhone() || get_ecommerce_setting('keep_email_field_in_registration_form', true), function (FormAbstract $form): void {
                 $form
                     ->add(

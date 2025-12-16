@@ -103,6 +103,8 @@ class RegisterController extends BaseController
     {
         return Customer::query()->create([
             'name' => BaseHelper::clean($data['name']),
+            'username' => BaseHelper::clean($data['username']),
+            'referral_username' => BaseHelper::clean($data['referral_username'] ?? null),
             'email' => BaseHelper::clean($data['email'] ?? null),
             'phone' => BaseHelper::clean($data['phone'] ?? null),
             'password' => Hash::make($data['password']),

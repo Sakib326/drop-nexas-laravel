@@ -15,6 +15,20 @@ class RegisterRequest extends Request
     {
         $rules = [
             'name' => ['required', 'max:120', 'min:2'],
+            'username' => [
+                'required',
+                'string',
+                'max:60',
+                'min:3',
+                'regex:/^[a-zA-Z0-9_]+$/',
+                Rule::unique((new Customer())->getTable(), 'username'),
+            ],
+            'referral_username' => [
+                'nullable',
+                'string',
+                'max:60',
+                Rule::exists((new Customer())->getTable(), 'username'),
+            ],
             'email' => [
                 'nullable',
                 Rule::requiredIf(! EcommerceHelper::isLoginUsingPhone()),
@@ -38,6 +52,8 @@ class RegisterRequest extends Request
     {
         return apply_filters('ecommerce_customer_registration_form_validation_attributes', [
             'name' => __('Name'),
+            'username' => __('Username'),
+            'referral_username' => __('Referral Username'),
             'email' => __('Email'),
             'password' => __('Password'),
             'phone' => __('Phone'),

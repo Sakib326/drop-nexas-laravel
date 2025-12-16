@@ -53,6 +53,8 @@ class Customer extends BaseModel implements
         'phone',
         'status',
         'private_notes',
+        'username',
+        'referral_username',
     ];
 
     protected $hidden = [
@@ -143,6 +145,16 @@ class Customer extends BaseModel implements
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class, 'customer_id');
+    }
+
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(Customer::class, 'referral_username', 'username');
+    }
+
+    public function referrer(): HasOne
+    {
+        return $this->hasOne(Customer::class, 'username', 'referral_username');
     }
 
     public function promotions(): BelongsToMany
