@@ -32,7 +32,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('affiliate.downline') }}">
                                 <i class="fi-rs-users"></i>
-                                {{ __('My Downline') }}
+                                {{ __('My Contributor Partners') }}
                             </a>
                         </li>
                         <li class="nav-item">

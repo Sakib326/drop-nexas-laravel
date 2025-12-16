@@ -32,7 +32,7 @@
                         <li class="nav-item">
                             <a class="nav-link active" href="{{ route('affiliate.downline') }}">
                                 <i class="fi-rs-users"></i>
-                                {{ __('My Downline') }}
+                                {{ __('My Contributor Partners') }}
                             </a>
                         </li>
                         <li class="nav-item">
@@ -54,7 +54,7 @@
                 <div class="tab-content account dashboard-content pl-50">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="mb-0">{{ __('My Downline Network') }}</h3>
+                            <h3 class="mb-0">{{ __('My Contributor Partners Network') }}</h3>
                         </div>
                         <div class="card-body">
                             {{-- Search Form --}}

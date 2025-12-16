@@ -106,7 +106,7 @@ class AffiliateController extends Controller
 
     public function downline(Request $request)
     {
-        SeoHelper::setTitle(__('My Downline'));
+        SeoHelper::setTitle(__('My Contributor Partners'));
 
         $customer = auth('customer')->user();
 
