@@ -15,6 +15,18 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="{{ route('affiliate.products') }}">
+                                <i class="fi-rs-shopping-bag"></i>
+                                {{ __('Products') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('affiliate.downline') }}">
+                                <i class="fi-rs-users"></i>
+                                {{ __('My Downline') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('customer.overview') }}">
                                 <i class="fi-rs-user"></i>
                                 {{ __('My Account') }}
@@ -63,7 +75,7 @@
                                             <i class="fi-rs-users"></i>
                                         </div>
                                         <div class="card-info">
-                                            <h4>0</h4>
+                                            <h4>{{ $referralCount }}</h4>
                                             <p class="text-muted">{{ __('Total Referrals') }}</p>
                                         </div>
                                     </div>

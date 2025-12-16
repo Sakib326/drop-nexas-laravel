@@ -149,12 +149,14 @@ class Customer extends BaseModel implements
 
     public function referrals(): HasMany
     {
-        return $this->hasMany(Customer::class, 'referral_username', 'username');
+        return $this->hasMany(Customer::class, 'referral_username', 'username')
+            ->whereNotNull('username')
+            ->whereNotNull('referral_username');
     }
 
-    public function referrer(): HasOne
+    public function referrer()
     {
-        return $this->hasOne(Customer::class, 'username', 'referral_username');
+        return $this->belongsTo(Customer::class, 'referral_username', 'username');
     }
 
     public function promotions(): BelongsToMany
