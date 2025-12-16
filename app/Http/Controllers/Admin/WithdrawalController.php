@@ -236,6 +236,18 @@ class WithdrawalController extends Controller
             throw new \Exception('Cannot change status from completed. Money has already been sent.');
         }
 
+        // If changing TO completed, update total_withdrawn
+        if ($newStatus === 'completed' && $oldStatus !== 'completed') {
+            $customer->total_withdrawn = ($customer->total_withdrawn ?? 0) + $amount;
+            $customer->save();
+
+            Log::info('Total withdrawn updated', [
+                'customer_id' => $customer->id,
+                'amount_withdrawn' => $amount,
+                'total_withdrawn' => $customer->total_withdrawn
+            ]);
+        }
+
         // If changing TO rejected from pending/processing, restore the balance
         if (in_array($oldStatus, ['pending', 'processing']) && $newStatus === 'rejected') {
             $customer->available_balance += $amount;

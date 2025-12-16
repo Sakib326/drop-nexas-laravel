@@ -19,6 +19,8 @@ class AffiliateCommission extends Model
         'product_cost',
         'commission_rate',
         'commission_amount',
+        'order_amount',
+        'profit_amount',
         'status',
         'approved_at',
         'notes',
@@ -29,6 +31,8 @@ class AffiliateCommission extends Model
         'product_cost' => 'decimal:2',
         'commission_rate' => 'decimal:2',
         'commission_amount' => 'decimal:2',
+        'order_amount' => 'decimal:2',
+        'profit_amount' => 'decimal:2',
         'approved_at' => 'datetime',
     ];
 
