@@ -13,14 +13,32 @@ return new class () extends Migration {
     {
         Schema::table('affiliate_commissions', function (Blueprint $table) {
             // Drop old columns
-            $table->dropColumn(['product_price', 'product_cost']);
+
+            Schema::table('affiliate_commissions', function (Blueprint $table) {
+                if (Schema::hasColumn('affiliate_commissions', 'product_price')) {
+                    $table->dropColumn('product_price');
+                }
+                if (Schema::hasColumn('affiliate_commissions', 'product_cost')) {
+                    $table->dropColumn('product_cost');
+                }
+            });
+
 
             // Change commission_type to string for more flexibility
             DB::statement('ALTER TABLE affiliate_commissions MODIFY commission_type VARCHAR(50)');
 
             // Add new columns
-            $table->decimal('order_amount', 15, 2)->default(0)->after('commission_type');
-            $table->decimal('profit_amount', 15, 2)->default(0)->after('order_amount');
+
+            // Add new columns if they do not exist
+            Schema::table('affiliate_commissions', function (Blueprint $table) {
+                if (!Schema::hasColumn('affiliate_commissions', 'order_amount')) {
+                    $table->decimal('order_amount', 15, 2)->default(0)->after('commission_type');
+                }
+                if (!Schema::hasColumn('affiliate_commissions', 'profit_amount')) {
+                    $table->decimal('profit_amount', 15, 2)->default(0)->after('order_amount');
+                }
+            });
+
         });
     }
 

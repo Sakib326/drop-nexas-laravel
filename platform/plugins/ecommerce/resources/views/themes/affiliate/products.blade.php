@@ -155,7 +155,7 @@
                                                 </td>
                                                 <td>
                                                     <button class="btn btn-sm btn-primary copy-url-btn"
-                                                        data-url="{{ route('public.single', $product->slug) }}?fromre={{ $customer->username }}"
+                                                        data-url="{{ url('/products/' . $product->slug) }}?fromre={{ $customer->username }}"
                                                         title="{{ __('Copy affiliate link') }}">
                                                         <i class="fi-rs-copy"></i> {{ __('Copy Link') }}
                                                     </button>

@@ -8,7 +8,7 @@
  */
 
 (function () {
-  'use strict';
+  "use strict";
 
   // Function to get query parameter by name
   function getQueryParam(name) {
@@ -18,26 +18,26 @@
 
   // Function to save referral username to localStorage
   function saveReferralUsername(username) {
-    if (username && username.trim() !== '') {
-      localStorage.setItem('referral_username', username.trim());
+    if (username && username.trim() !== "") {
+      localStorage.setItem("referral_username", username.trim());
     }
   }
 
   // Function to get saved referral username
   function getReferralUsername() {
-    return localStorage.getItem('referral_username');
+    return localStorage.getItem("referral_username");
   }
 
   // Check for 'fromre' parameter on page load
-  var referralUsername = getQueryParam('fromre');
+  var referralUsername = getQueryParam("fromre");
   if (referralUsername) {
     saveReferralUsername(referralUsername);
   }
 
   // Auto-populate referral field on registration page
-  if (window.location.pathname.includes('register')) {
+  if (window.location.pathname.includes("register")) {
     // Wait for DOM to be ready
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener("DOMContentLoaded", function () {
       var referralField = document.querySelector('input[name="referral_username"]');
       var savedReferral = getReferralUsername();
       if (referralField && savedReferral && !referralField.value) {
@@ -51,7 +51,7 @@
     save: saveReferralUsername,
     get: getReferralUsername,
     clear: function clear() {
-      localStorage.removeItem('referral_username');
+      localStorage.removeItem("referral_username");
     }
   };
 })();
