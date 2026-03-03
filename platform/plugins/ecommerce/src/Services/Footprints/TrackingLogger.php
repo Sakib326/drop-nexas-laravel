@@ -15,10 +15,18 @@ class TrackingLogger implements TrackingLoggerInterface
 
         $data = $this->captureAttributionData();
 
-        if ($data && ! app(FootprinterInterface::class)->getFootprints()) {
+        if ($data && ! empty($data['referral'])) {
+            session(['referral_username' => $data['referral']]);
+        }
+
+        $existing = app(FootprinterInterface::class)->getFootprints();
+
+        if ($data && (! $existing || ($this->captureReferral() && empty($existing['referral'])))) {
+            $cookieData = $existing ? array_merge($existing, $data) : $data;
+
             Cookie::queue(
                 'botble_footprints_cookie_data',
-                json_encode($data),
+                json_encode($cookieData),
                 604800,
                 null,
                 config('session.domain')

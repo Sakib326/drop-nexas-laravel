@@ -197,10 +197,22 @@ class HookServiceProvider extends ServiceProvider
 
         add_filter('social_login_before_saving_account', function (array $data, $oAuth, $providerData) {
             if ($providerData['guard'] === 'customer') {
-                $referral = app(\Botble\Ecommerce\Services\Footprints\FootprinterInterface::class)->getFootprints();
+                $referralUsername = session('referral_username');
+                
+                if (! $referralUsername) {
+                    $referral = app(\Botble\Ecommerce\Services\Footprints\FootprinterInterface::class)->getFootprints();
+                    $referralUsername = $referral['referral'] ?? null;
+                }
 
-                if ($referral && ! empty($referral['referral'])) {
-                    $data['referral_username'] = $referral['referral'];
+                \Illuminate\Support\Facades\Log::info('Social Login Referral Check', [
+                    'email' => $data['email'] ?? 'unknown',
+                    'session_referral' => session('referral_username'),
+                    'cookie_referral' => $referralUsername,
+                ]);
+
+                if ($referralUsername) {
+                    $data['referral_username'] = $referralUsername;
+                    \Illuminate\Support\Facades\Log::info('Referral Applied', ['username' => $referralUsername]);
                 }
             }
 
