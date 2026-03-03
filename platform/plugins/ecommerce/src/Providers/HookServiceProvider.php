@@ -195,6 +195,18 @@ class HookServiceProvider extends ServiceProvider
             }, 15, 2);
         });
 
+        add_filter('social_login_before_saving_account', function (array $data, $oAuth, $providerData) {
+            if ($providerData['guard'] === 'customer') {
+                $referral = app(\Botble\Ecommerce\Services\Footprints\FootprinterInterface::class)->getFootprints();
+
+                if ($referral && ! empty($referral['referral'])) {
+                    $data['referral_username'] = $referral['referral'];
+                }
+            }
+
+            return $data;
+        }, 120, 3);
+
         $this->app['events']->listen(RenderingDashboardWidgets::class, function (): void {
             add_filter(DASHBOARD_FILTER_ADMIN_LIST, function ($widgets) {
                 foreach ($widgets as $key => $widget) {

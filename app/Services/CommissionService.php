@@ -28,9 +28,10 @@ class CommissionService
         3 => 5,  // Level 3
         4 => 4,  // Level 4
         5 => 2,  // Level 5
+        6 => 2,  // Level 6
     ];
 
-    public const LEVEL_6_PLUS_COMMISSION = 2; // Remaining 2% for level 6+
+    public const LEVEL_7_PLUS_COMMISSION = 2; // Remaining 2% for level 7+
     public const GLOBAL_THRIVE_POOL = 3;      // 3% for Global Thrive pool
     public const EMPIRE_BUILDER_POOL = 2;     // 2% for Empire Builder pool
 
@@ -202,8 +203,8 @@ class CommissionService
 
             Log::info("Found referrer: {$referrer->name} (ID: {$referrer->id})");
 
-            if ($level <= 5) {
-                // Levels 1-5: Fixed percentages
+            if ($level <= 6) {
+                // Levels 1-6: Fixed percentages
                 $percentage = self::REFERRAL_COMMISSIONS[$level];
                 $commission = ($totalProfit * $percentage) / 100;
 
@@ -219,25 +220,25 @@ class CommissionService
                 ]);
 
             } else {
-                // Level 6+: Collect users for equal split
-                $level6PlusUsers[] = $referrer;
+                // Level 7+: Collect users for equal split
+                $level7PlusUsers[] = $referrer;
             }
 
             $currentUser = $referrer;
             $level++;
         }
 
-        // Distribute remaining 2% equally among level 6+ users
-        if (count($level6PlusUsers) > 0) {
-            $poolAmount = ($totalProfit * self::LEVEL_6_PLUS_COMMISSION) / 100;
-            $perUserAmount = $poolAmount / count($level6PlusUsers);
+        // Distribute remaining 2% equally among level 7+ users
+        if (count($level7PlusUsers) > 0) {
+            $poolAmount = ($totalProfit * self::LEVEL_7_PLUS_COMMISSION) / 100;
+            $perUserAmount = $poolAmount / count($level7PlusUsers);
 
-            foreach ($level6PlusUsers as $index => $user) {
+            foreach ($level7PlusUsers as $index => $user) {
                 $this->createCommission([
                     'customer_id' => $user->id,
                     'order_id' => $order->id,
-                    'commission_type' => 'referral_level_6_plus',
-                    'commission_rate' => self::LEVEL_6_PLUS_COMMISSION / count($level6PlusUsers),
+                    'commission_type' => 'referral_level_7_plus',
+                    'commission_rate' => self::LEVEL_7_PLUS_COMMISSION / count($level7PlusUsers),
                     'commission_amount' => $perUserAmount,
                     'order_amount' => $order->amount,
                     'profit_amount' => $totalProfit,

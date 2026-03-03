@@ -15,6 +15,7 @@ AdminHelper::registerRoutes(
     function (): void {
         // Commission Management Routes
         Route::group(['prefix' => 'commissions', 'as' => 'admin.commissions.', 'permission' => 'customers.index'], function (): void {
+            Route::get('/dashboard', [CommissionController::class, 'dashboard'])->name('dashboard');
             Route::get('/', [CommissionController::class, 'index'])->name('index');
             Route::get('/user/{customerId}/history', [CommissionController::class, 'userCommissions'])->name('user-history');
             Route::get('/user/{customerId}/hierarchy', [CommissionController::class, 'userHierarchy'])->name('user-hierarchy');

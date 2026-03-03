@@ -907,7 +907,7 @@ class EcommerceServiceProvider extends ServiceProvider
                     'parent_id' => 'cms-plugins-ecommerce',
                     'name' => 'Commissions',
                     'icon' => 'ti ti-coins',
-                    'url' => fn () => route('admin.commissions.index'),
+                    'url' => fn () => route('admin.commissions.dashboard'),
                     'permissions' => ['customers.index'],
                 ])
                 ->registerItem([

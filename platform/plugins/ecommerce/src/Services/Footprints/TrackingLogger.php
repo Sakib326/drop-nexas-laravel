@@ -120,6 +120,6 @@ class TrackingLogger implements TrackingLoggerInterface
 
     protected function captureReferral(): ?string
     {
-        return $this->request->input('ref');
+        return $this->request->input('ref') ?: $this->request->input('fromre');
     }
 }

@@ -10,6 +10,150 @@ use Illuminate\Support\Facades\DB;
 class CommissionController extends Controller
 {
     /**
+     * Commission Dashboard
+     */
+    public function dashboard(Request $request)
+    {
+        $dateFrom = $request->filled('date_from') ? $request->date_from : now()->startOfMonth()->toDateString();
+        $dateTo   = $request->filled('date_to')   ? $request->date_to   : now()->toDateString();
+
+        // --- Commission stats (date-filtered) ---
+        $commissionQuery = DB::table('affiliate_commissions')
+            ->where('affiliate_commissions.created_at', '>=', $dateFrom)
+            ->where('affiliate_commissions.created_at', '<=', $dateTo . ' 23:59:59')
+            ->where('affiliate_commissions.commission_amount', '>', 0); // exclude reversals
+
+        $totalCommissionsDistributed = (clone $commissionQuery)->sum('affiliate_commissions.commission_amount');
+        $totalCommissionRecords      = (clone $commissionQuery)->count();
+        $activeAffiliates            = (clone $commissionQuery)->distinct('affiliate_commissions.customer_id')->count('affiliate_commissions.customer_id');
+
+        // Per commission-type breakdown
+        $commissionBreakdown = (clone $commissionQuery)
+            ->select([
+                'commission_type',
+                DB::raw('COUNT(*) as record_count'),
+                DB::raw('SUM(commission_amount) as total_distributed'),
+                DB::raw('AVG(commission_rate) as avg_rate'),
+            ])
+            ->groupBy('commission_type')
+            ->orderBy('total_distributed', 'desc')
+            ->get();
+
+        // --- Cashout stats (date-filtered) ---
+        $withdrawalQuery = DB::table('affiliate_withdrawals')
+            ->where('affiliate_withdrawals.created_at', '>=', $dateFrom)
+            ->where('affiliate_withdrawals.created_at', '<=', $dateTo . ' 23:59:59');
+
+        $cashoutStats = (clone $withdrawalQuery)
+            ->select([
+                DB::raw('SUM(CASE WHEN status = "completed" THEN amount ELSE 0 END) as completed_amount'),
+                DB::raw('COUNT(CASE WHEN status = "completed" THEN 1 END) as completed_count'),
+                DB::raw('SUM(CASE WHEN status IN ("pending","processing") THEN amount ELSE 0 END) as pending_amount'),
+                DB::raw('COUNT(CASE WHEN status IN ("pending","processing") THEN 1 END) as pending_count'),
+                DB::raw('SUM(CASE WHEN status = "rejected" THEN amount ELSE 0 END) as rejected_amount'),
+                DB::raw('COUNT(CASE WHEN status = "rejected" THEN 1 END) as rejected_count'),
+            ])
+            ->first();
+
+        // --- Top 5 earners in period ---
+        $topEarners = (clone $commissionQuery)
+            ->join('ec_customers as c', 'affiliate_commissions.customer_id', '=', 'c.id')
+            ->select([
+                'affiliate_commissions.customer_id',
+                'c.name as customer_name',
+                'c.username',
+                'c.level_name',
+                DB::raw('SUM(affiliate_commissions.commission_amount) as total_earned'),
+                DB::raw('COUNT(*) as commission_count'),
+            ])
+            ->groupBy('affiliate_commissions.customer_id', 'c.name', 'c.username', 'c.level_name')
+            ->orderBy('total_earned', 'desc')
+            ->limit(5)
+            ->get();
+
+        // --- Daily trend (commissions grouped by date) ---
+        $dailyTrend = DB::table('affiliate_commissions')
+            ->where('affiliate_commissions.created_at', '>=', $dateFrom)
+            ->where('affiliate_commissions.created_at', '<=', $dateTo . ' 23:59:59')
+            ->where('affiliate_commissions.commission_amount', '>', 0)
+            ->select([
+                DB::raw('DATE(affiliate_commissions.created_at) as date'),
+                DB::raw('SUM(affiliate_commissions.commission_amount) as total'),
+                DB::raw('COUNT(*) as count'),
+            ])
+            ->groupBy(DB::raw('DATE(affiliate_commissions.created_at)'))
+            ->orderBy('date')
+            ->get();
+
+        // --- PREPARE ABSOLUTE "AVAILABLE BALANCE" (All-time) ---
+        // For the "Available Now" card, we need absolute system stats, not just period-filtered.
+        $allTimeDistributed = DB::table('affiliate_commissions')
+            ->where('commission_amount', '>', 0)
+            ->sum('commission_amount');
+
+        $allTimeCashouts = DB::table('affiliate_withdrawals')
+            ->whereIn('status', ['completed', 'pending', 'processing'])
+            ->sum('amount');
+
+        $availableBalance = (float)$allTimeDistributed - (float)$allTimeCashouts;
+
+        // --- Prepare Chart Data with Consistent Colors ---
+        $colorMap = [
+            'referral_level_1'     => '#6366f1', // Indigo
+            'referral_level_2'     => '#3b82f6', // Blue
+            'referral_level_3'     => '#0ea5e9', // Sky
+            'referral_level_4'     => '#22d3ee', // Cyan
+            'referral_level_5'     => '#2dd4bf', // Teal
+            'referral_level_6'     => '#0d9488', // Dark Teal
+            'referral_level_7_plus' => '#64748b', // Blue Grey
+            'global_thrive_pool'   => '#10b981', // Emerald
+            'empire_builder_pool'  => '#fbbf24', // Amber
+            'reversal'             => '#ef4444', // Red
+            'others'               => '#8b5cf6', // Purple
+        ];
+
+        $chartTypeData = $commissionBreakdown->map(function ($item) use ($colorMap) {
+            $type = $item->commission_type;
+            $color = $colorMap[$type] ?? (str_contains($type, 'reversal') ? $colorMap['reversal'] : $colorMap['others']);
+            
+            // Map common labels to user-friendly names
+            $label = match($type) {
+                'referral_level_1' => 'Direct Sale Bonus',
+                'referral_level_2' => 'Alliance Bonus Lvl 1',
+                'referral_level_3' => 'Alliance Bonus Lvl 2',
+                'referral_level_4' => 'Alliance Bonus Lvl 3',
+                'referral_level_5' => 'Alliance Bonus Lvl 4',
+                'referral_level_6' => 'Alliance Bonus Lvl 5',
+                'referral_level_7_plus' => 'Alliance Bonus Lvl 6+',
+                default => ucwords(str_replace('_', ' ', $type)),
+            };
+
+            return [
+                'label' => $label,
+                'value' => (float)$item->total_distributed,
+                'color' => $color
+            ];
+        });
+
+        $chartTrendData = $dailyTrend->sortBy('date')->map(fn($item) => [
+            'date' => \Carbon\Carbon::parse($item->date)->format('d M'),
+            'value' => (float)$item->total
+        ])->values();
+
+        return view('admin.commissions.dashboard', compact(
+            'dateFrom', 'dateTo',
+            'totalCommissionsDistributed', 'totalCommissionRecords', 'activeAffiliates',
+            'commissionBreakdown',
+            'cashoutStats',
+            'topEarners',
+            'dailyTrend',
+            'chartTypeData',
+            'chartTrendData',
+            'availableBalance'
+        ));
+    }
+
+    /**
      * Display a listing of all commissions
      */
     public function index(Request $request)
