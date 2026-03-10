@@ -214,6 +214,21 @@ class HookServiceProvider extends ServiceProvider
                     $data['referral_username'] = $referralUsername;
                     \Illuminate\Support\Facades\Log::info('Referral Applied', ['username' => $referralUsername]);
                 }
+
+                if (empty($data['username']) && ! empty($data['email'])) {
+                    $username = Str::slug(explode('@', $data['email'])[0]);
+                    
+                    $originalUsername = $username;
+                    $count = 1;
+                    
+                    while (Customer::query()->where('username', $username)->exists()) {
+                        $username = $originalUsername . $count;
+                        $count++;
+                    }
+
+                    $data['username'] = $username;
+                    \Illuminate\Support\Facades\Log::info('Username Generated for Social Login', ['username' => $username, 'email' => $data['email']]);
+                }
             }
 
             return $data;
