@@ -40,36 +40,46 @@ class CommissionService
      */
     public function distributeCommissions(Order $order): bool
     {
+        Log::info("CommissionService DEBUG: Starting distribution for order #{$order->id}");
+
         try {
             DB::beginTransaction();
 
             // Check if already distributed
             if ($order->is_commission_distributed) {
-                Log::warning("Commission already distributed for order #{$order->id}");
+                Log::warning("CommissionService: Already distributed for order #{$order->id}");
                 return false;
             }
 
             // Get buyer
             $buyer = Customer::find($order->user_id);
             if (!$buyer) {
-                Log::info("No customer found for order #{$order->id}");
+                Log::info("CommissionService: No customer found for order #{$order->id} (Guest checkout?)");
                 DB::commit();
-                return true; // Not an error, guest checkout
+                $order->update(['is_commission_distributed' => true]);
+                return true; 
             }
+
+            Log::info("CommissionService: Buyer found: {$buyer->name} (UID: {$buyer->id}), Referral: " . ($buyer->referral_username ?? 'NONE'));
 
             // Calculate total profit from order items
             $orderProducts = OrderProduct::where('order_id', $order->id)->get();
             $totalProfit = 0;
             $profitableItems = [];
 
+            Log::info("CommissionService: Checking " . $orderProducts->count() . " order products for profit.");
+
             foreach ($orderProducts as $orderProduct) {
                 $product = $orderProduct->product;
                 if (!$product) {
+                    Log::warning("CommissionService: Product not found for order item #{$orderProduct->id}");
                     continue;
                 }
 
-                $cost = $product->cost_per_item ?? 0;
-                $price = $orderProduct->price; // Use actual order price
+                $cost = (float) ($product->cost_per_item ?? 0);
+                $price = (float) $orderProduct->price; // Use actual order price
+
+                Log::info("CommissionService: Product '{$product->name}' (ID: {$product->id}) - Price: {$price}, Cost: {$cost}");
 
                 if ($cost > 0 && $price > $cost) {
                     $profit = ($price - $cost) * $orderProduct->qty;
@@ -79,15 +89,20 @@ class CommissionService
                         'product_id' => $product->id,
                         'profit' => $profit,
                     ];
+                    Log::info("CommissionService: PROFITABLE item found. Profit: {$profit}");
+                } else {
+                    Log::info("CommissionService: NON-PROFITABLE item. Cost is 0 or price not > cost.");
                 }
             }
 
             if ($totalProfit <= 0) {
-                Log::info("No profit in order #{$order->id}, skipping commission");
+                Log::info("CommissionService: No total profit in order #{$order->id} (Total Profit: {$totalProfit}), skipping commission distribution.");
                 $order->update(['is_commission_distributed' => true]);
                 DB::commit();
                 return true;
             }
+
+            Log::info("CommissionService: Total Profit calculated: {$totalProfit}. Proceeding to tree distribution.");
 
             // Distribute referral tree commissions
             $this->distributeReferralCommissions($buyer, $order, $totalProfit, $profitableItems);
@@ -100,12 +115,14 @@ class CommissionService
             $order->update(['is_commission_distributed' => true]);
 
             DB::commit();
-            Log::info("Successfully distributed commissions for order #{$order->id}, total profit: {$totalProfit}");
+            Log::info("CommissionService: SUCCESS. Distributed commissions for order #{$order->id}, total profit: {$totalProfit}");
             return true;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Commission distribution failed for order #{$order->id}: " . $e->getMessage());
+            Log::error("CommissionService ERROR: Distribution failed for order #{$order->id}: " . $e->getMessage(), [
+                'exception' => $e
+            ]);
             throw $e;
         }
     }
@@ -189,7 +206,7 @@ class CommissionService
 
         $currentUser = $buyer;
         $level = 1;
-        $level6PlusUsers = [];
+        $level7PlusUsers = [];
 
         // Traverse up the referral tree
         while ($currentUser->referral_username) {
@@ -203,25 +220,34 @@ class CommissionService
 
             Log::info("Found referrer: {$referrer->name} (ID: {$referrer->id})");
 
-            if ($level <= 6) {
-                // Levels 1-6: Fixed percentages
-                $percentage = self::REFERRAL_COMMISSIONS[$level];
-                $commission = ($totalProfit * $percentage) / 100;
+            $isEligible = $referrer->is_affiliate && $referrer->affiliate_status == \Botble\Ecommerce\Enums\AffiliateStatusEnum::APPROVED;
 
-                $this->createCommission([
-                    'customer_id' => $referrer->id,
-                    'order_id' => $order->id,
-                    'commission_type' => "referral_level_{$level}",
-                    'commission_rate' => $percentage,
-                    'commission_amount' => $commission,
-                    'order_amount' => $order->amount,
-                    'profit_amount' => $totalProfit,
-                    'status' => 'approved', // Auto-approve
-                ]);
+            if ($level <= 6) {
+                if ($isEligible) {
+                    // Levels 1-6: Fixed percentages
+                    $percentage = self::REFERRAL_COMMISSIONS[$level];
+                    $commission = ($totalProfit * $percentage) / 100;
+
+                    $this->createCommission([
+                        'customer_id' => $referrer->id,
+                        'order_id' => $order->id,
+                        'commission_type' => "referral_level_{$level}",
+                        'commission_rate' => $percentage,
+                        'commission_amount' => $commission,
+                        'order_amount' => $order->amount,
+                        'profit_amount' => $totalProfit,
+                        'status' => 'approved', // Auto-approve
+                    ]);
+                    Log::info("CommissionService: Distributed level {$level} commission to referrer ID: {$referrer->id}");
+                } else {
+                    Log::info("CommissionService: Referrer ID: {$referrer->id} is NOT eligible (is_affiliate: {$referrer->is_affiliate}, status: {$referrer->affiliate_status}), skipping level {$level}");
+                }
 
             } else {
-                // Level 7+: Collect users for equal split
-                $level7PlusUsers[] = $referrer;
+                // Level 7+: Collect eligible users for equal split
+                if ($isEligible) {
+                    $level7PlusUsers[] = $referrer;
+                }
             }
 
             $currentUser = $referrer;

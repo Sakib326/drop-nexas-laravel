@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AffiliateCommission;
 use App\Models\AffiliateWithdrawal;
+use Botble\Ecommerce\Enums\AffiliateStatusEnum;
 use Botble\Ecommerce\Facades\EcommerceHelper;
 use Botble\Ecommerce\Models\Customer;
 use Botble\Ecommerce\Models\Product;
@@ -25,8 +26,22 @@ class AffiliateController extends Controller
             ->add('front-ecommerce-css', 'vendor/core/plugins/ecommerce/css/front-ecommerce.css', version: $version);
     }
 
+    protected function checkAffiliateStatus()
+    {
+        $customer = auth('customer')->user();
+        if (!$customer->is_affiliate || $customer->affiliate_status != AffiliateStatusEnum::APPROVED) {
+            return redirect()->route('affiliate.apply');
+        }
+        return null;
+    }
+
+
     public function dashboard()
     {
+        if ($redirect = $this->checkAffiliateStatus()) {
+            return $redirect;
+        }
+
         SeoHelper::setTitle(__('Affiliate Dashboard'));
 
         Theme::breadcrumb()
@@ -58,6 +73,10 @@ class AffiliateController extends Controller
 
     public function products(Request $request)
     {
+        if ($redirect = $this->checkAffiliateStatus()) {
+            return $redirect;
+        }
+
         SeoHelper::setTitle(__('Affiliate Products'));
 
         $customer = auth('customer')->user();
@@ -106,6 +125,10 @@ class AffiliateController extends Controller
 
     public function downline(Request $request)
     {
+        if ($redirect = $this->checkAffiliateStatus()) {
+            return $redirect;
+        }
+
         SeoHelper::setTitle(__('My Contributor Partners'));
 
         $customer = auth('customer')->user();
@@ -156,6 +179,10 @@ class AffiliateController extends Controller
 
     public function commissions(Request $request)
     {
+        if ($redirect = $this->checkAffiliateStatus()) {
+            return $redirect;
+        }
+
         SeoHelper::setTitle(__('Commission History'));
 
         $customer = auth('customer')->user();
@@ -192,6 +219,10 @@ class AffiliateController extends Controller
 
     public function withdrawals(Request $request)
     {
+        if ($redirect = $this->checkAffiliateStatus()) {
+            return $redirect;
+        }
+
         SeoHelper::setTitle(__('Withdrawal History'));
 
         $customer = auth('customer')->user();
@@ -214,6 +245,10 @@ class AffiliateController extends Controller
 
     public function withdrawalRequest()
     {
+        if ($redirect = $this->checkAffiliateStatus()) {
+            return $redirect;
+        }
+
         SeoHelper::setTitle(__('Request Withdrawal'));
 
         $customer = auth('customer')->user();
@@ -229,6 +264,10 @@ class AffiliateController extends Controller
 
     public function storeWithdrawalRequest(Request $request)
     {
+        if ($redirect = $this->checkAffiliateStatus()) {
+            return $redirect;
+        }
+
         $customer = auth('customer')->user();
         $minimumWithdrawal = 100;
 
@@ -269,5 +308,42 @@ class AffiliateController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', __('Failed to submit withdrawal request. Please try again.'));
         }
+    }
+
+    public function apply()
+    {
+        $customer = auth('customer')->user();
+
+        if ($customer->is_affiliate && $customer->affiliate_status == AffiliateStatusEnum::APPROVED) {
+            return redirect()->route('affiliate.dashboard');
+        }
+
+        SeoHelper::setTitle(__('Apply to be an Affiliate'));
+
+        Theme::breadcrumb()
+            ->add(__('Home'), route('public.index'))
+            ->add(__('Apply to be an Affiliate'), route('affiliate.apply'));
+
+        return Theme::scope(
+            'ecommerce.affiliate.apply',
+            compact('customer'),
+            'plugins/ecommerce::themes.affiliate.apply'
+        )->render();
+    }
+
+    public function storeApply(Request $request)
+    {
+        $customer = auth('customer')->user();
+
+        if ($customer->is_affiliate && $customer->affiliate_status != AffiliateStatusEnum::REJECTED) {
+            return redirect()->back()->with('error', __('You have already applied or are already an affiliate.'));
+        }
+
+        $customer->is_affiliate = true;
+        $customer->affiliate_status = AffiliateStatusEnum::PENDING;
+        $customer->affiliate_applied_at = now();
+        $customer->save();
+
+        return redirect()->route('affiliate.apply')->with('success', __('Your application has been submitted successfully and is pending approval.'));
     }
 }

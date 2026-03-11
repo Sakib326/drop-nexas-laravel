@@ -1018,8 +1018,16 @@ class EcommerceServiceProvider extends ServiceProvider
                     'name' => __('Logout'),
                     'url' => fn () => route('customer.logout'),
                     'icon' => 'ti ti-logout',
+                ])
+                ->registerItem([
+                    'id' => 'cms-customer-affiliate',
+                    'priority' => 80,
+                    'name' => __('Affiliate'),
+                    'url' => fn () => route('affiliate.dashboard'),
+                    'icon' => 'ti ti-link',
                 ]);
         });
+
 
         DashboardMenu::default();
 

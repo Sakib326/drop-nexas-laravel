@@ -32,4 +32,12 @@ return [
     ],
     'private_notes' => 'Private notes',
     'private_notes_helper' => 'Private notes are only visible to admins.',
+    'is_affiliate' => 'Is Affiliate?',
+    'affiliate_status' => 'Affiliate Status',
+    'affiliate_statuses' => [
+        'pending' => 'Pending',
+        'approved' => 'Approved',
+        'rejected' => 'Rejected',
+        'suspended' => 'Suspended',
+    ],
 ];

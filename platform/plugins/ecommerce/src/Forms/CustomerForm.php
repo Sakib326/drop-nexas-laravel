@@ -8,6 +8,7 @@ use Botble\Base\Forms\FieldOptions\EmailFieldOption;
 use Botble\Base\Forms\FieldOptions\MediaImageFieldOption;
 use Botble\Base\Forms\FieldOptions\NameFieldOption;
 use Botble\Base\Forms\FieldOptions\OnOffFieldOption;
+use Botble\Base\Forms\FieldOptions\SelectFieldOption;
 use Botble\Base\Forms\FieldOptions\StatusFieldOption;
 use Botble\Base\Forms\FieldOptions\TextareaFieldOption;
 use Botble\Base\Forms\FieldOptions\TextFieldOption;
@@ -95,6 +96,20 @@ class CustomerForm extends FormAbstract
                     ->colspan(2)
             )
             ->add('status', SelectField::class, StatusFieldOption::make()->choices(CustomerStatusEnum::labels()))
+            ->add(
+                'is_affiliate',
+                OnOffField::class,
+                OnOffFieldOption::make()
+                    ->label(trans('plugins/ecommerce::customer.is_affiliate'))
+                    ->defaultValue(0)
+            )
+            ->add(
+                'affiliate_status',
+                SelectField::class,
+                SelectFieldOption::make()
+                    ->label(trans('plugins/ecommerce::customer.affiliate_status'))
+                    ->choices(\Botble\Ecommerce\Enums\AffiliateStatusEnum::labels())
+            )
             ->add(
                 'avatar',
                 MediaImageField::class,

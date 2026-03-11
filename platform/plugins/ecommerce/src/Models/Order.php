@@ -79,28 +79,38 @@ class Order extends BaseModel
             $commissionService = app(\App\Services\CommissionService::class);
 
             // Get the original status before the update (as string)
-            $originalStatus = $order->getOriginal('status');
-            $newStatus = $order->status;
+            $originalStatus = (string) $order->getOriginal('status', '');
+            $newStatus = (string) $order->status;
+            $isDistributed = (bool) $order->is_commission_distributed;
 
-            \Illuminate\Support\Facades\Log::info("Order #{$order->id} updated - Original: {$originalStatus}, New: {$newStatus}");
+            \Illuminate\Support\Facades\Log::info("Order #{$order->id} DEBUG (updated hook):", [
+                'original_status' => $originalStatus,
+                'new_status' => $newStatus,
+                'is_commission_distributed' => $isDistributed,
+                'OrderStatusEnum::COMPLETED' => (string) OrderStatusEnum::COMPLETED,
+            ]);
 
             // Check if status changed to "completed"
             if ($originalStatus != OrderStatusEnum::COMPLETED && $newStatus == OrderStatusEnum::COMPLETED) {
-                if (!$order->is_commission_distributed) {
+                if (!$isDistributed) {
                     try {
-                        \Illuminate\Support\Facades\Log::info("Order #{$order->id} completed, distributing commissions");
+                        \Illuminate\Support\Facades\Log::info("Order #{$order->id} STATUS MATCH: Status changed to completed, attempting distribution.");
                         $commissionService->distributeCommissions($order);
                     } catch (\Exception $e) {
                         \Illuminate\Support\Facades\Log::error("Failed to distribute commissions for order #{$order->id}: " . $e->getMessage());
                     }
+                } else {
+                    \Illuminate\Support\Facades\Log::info("Order #{$order->id} SKIP: Commission already distributed.");
                 }
+            } else {
+                \Illuminate\Support\Facades\Log::info("Order #{$order->id} NO STATUS MATCH: Condition (original != completed && new == completed) not met.");
             }
 
             // Check if status changed FROM "completed" to something else
             if ($originalStatus == OrderStatusEnum::COMPLETED && $newStatus != OrderStatusEnum::COMPLETED) {
-                if ($order->is_commission_distributed) {
+                if ($isDistributed) {
                     try {
-                        \Illuminate\Support\Facades\Log::info("Order #{$order->id} status changed from completed, reversing commissions");
+                        \Illuminate\Support\Facades\Log::info("Order #{$order->id} REVERSE TRIGGER: Status changed FROM completed, attempting reversal.");
                         $commissionService->reverseCommissions($order);
                     } catch (\Exception $e) {
                         \Illuminate\Support\Facades\Log::error("Failed to reverse commissions for order #{$order->id}: " . $e->getMessage());

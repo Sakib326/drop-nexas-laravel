@@ -58,7 +58,19 @@ class CustomerTable extends TableAbstract
                     '',
                     ['src' => $item->avatar_url, 'alt' => BaseHelper::clean($item->name), 'width' => 50]
                 );
+            })
+            ->editColumn('affiliate_status', function (Customer $item) {
+                return $item->is_affiliate ? $item->affiliate_status->toHtml() : '&mdash;';
+            })
+            ->editColumn('affiliate_applied_at', function (Customer $item) {
+                return $item->affiliate_applied_at ? $item->affiliate_applied_at->translatedFormat('Y-m-d H:i') : '&mdash;';
+            })
+            ->editColumn('affiliate_status_changed_at', function (Customer $item) {
+                return $item->affiliate_status_changed_at ? $item->affiliate_status_changed_at->translatedFormat('Y-m-d H:i') : '&mdash;';
             });
+
+        \Illuminate\Support\Facades\Log::info('CustomerTable SQL: ' . $this->query()->toSql());
+        \Illuminate\Support\Facades\Log::info('CustomerTable Bindings: ' . json_encode($this->query()->getBindings()));
 
         return $this->toJson($data);
     }
@@ -77,6 +89,11 @@ class CustomerTable extends TableAbstract
                 'created_at',
                 'status',
                 'confirmed_at',
+                'is_affiliate',
+                'affiliate_status',
+                'affiliate_applied_at',
+                'affiliate_status_changed_at',
+                'referral_username',
             ]);
 
         return $this->applyScopes($query);
@@ -89,6 +106,14 @@ class CustomerTable extends TableAbstract
             Column::make('avatar')
                 ->title(trans('plugins/ecommerce::customer.avatar')),
             NameColumn::make()->route('customers.edit'),
+            Column::make('affiliate_status')
+                ->title(trans('plugins/ecommerce::customer.affiliate_status')),
+            Column::make('affiliate_applied_at')
+                ->title(__('Applied At')),
+            Column::make('affiliate_status_changed_at')
+                ->title(__('Status Changed At')),
+            Column::make('referral_username')
+                ->title(__('Referral')),
         ];
 
         if (EcommerceHelper::isLoginUsingPhone()) {
@@ -147,17 +172,30 @@ class CustomerTable extends TableAbstract
             ];
         }
 
+        $filters['is_pending_affiliate'] = [
+            'title' => __('Pending Affiliates'),
+            'type' => 'select',
+            'choices' => [1 => trans('core/base::base.yes'), 0 => trans('core/base::base.no')],
+            'validate' => 'required|in:1,0',
+        ];
+
+        $filters['affiliate_status'] = [
+            'title' => trans('plugins/ecommerce::customer.affiliate_status'),
+            'type' => 'select',
+            'choices' => \Botble\Ecommerce\Enums\AffiliateStatusEnum::labels(),
+            'validate' => 'required|in:' . implode(',', \Botble\Ecommerce\Enums\AffiliateStatusEnum::values()),
+        ];
+
+        $filters['no_referral'] = [
+            'title' => __('No Referral'),
+            'type' => 'select',
+            'choices' => [1 => trans('core/base::base.yes'), 2 => trans('core/base::base.no')],
+            'validate' => 'required|in:1,2',
+        ];
+
         return $filters;
     }
 
-    public function renderTable($data = [], $mergeData = []): View|Factory|Response
-    {
-        if ($this->isEmpty()) {
-            return view('plugins/ecommerce::customers.intro');
-        }
-
-        return parent::renderTable($data, $mergeData);
-    }
 
     public function getDefaultButtons(): array
     {
@@ -170,8 +208,22 @@ class CustomerTable extends TableAbstract
         string $operator,
         ?string $value
     ) {
-        if (EcommerceHelper::isEnableEmailVerification() && $key === 'confirmed_at') {
-            return $value ? $query->whereNotNull($key) : $query->whereNull($key);
+        if ($key == 'is_pending_affiliate') {
+            if ($value == '1') {
+                return $query->where('is_affiliate', 1)->where('affiliate_status', \Botble\Ecommerce\Enums\AffiliateStatusEnum::PENDING);
+            }
+            return $query->where(function ($q) {
+                $q->where('is_affiliate', 0)->orWhere('affiliate_status', '!=', \Botble\Ecommerce\Enums\AffiliateStatusEnum::PENDING);
+            });
+        }
+
+        if ($key == 'no_referral') {
+            if ($value == '1') {
+                return $query->where(function ($q) {
+                    $q->whereNull('referral_username')->orWhere('referral_username', '');
+                });
+            }
+            return $query->whereNotNull('referral_username')->where('referral_username', '!=', '');
         }
 
         return parent::applyFilterCondition($query, $key, $operator, $value);

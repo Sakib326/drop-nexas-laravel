@@ -6,6 +6,7 @@ use Botble\Base\Facades\MacroableModels;
 use Botble\Base\Models\BaseModel;
 use Botble\Base\Models\BaseQueryBuilder;
 use Botble\Base\Supports\Avatar;
+use Botble\Ecommerce\Enums\AffiliateStatusEnum;
 use Botble\Ecommerce\Enums\CustomerStatusEnum;
 use Botble\Ecommerce\Enums\DiscountTypeEnum;
 use Botble\Ecommerce\Notifications\ConfirmEmailNotification;
@@ -62,6 +63,10 @@ class Customer extends BaseModel implements
         'lifetime_earnings',
         'level',
         'level_name',
+        'is_affiliate',
+        'affiliate_status',
+        'affiliate_applied_at',
+        'affiliate_status_changed_at',
     ];
 
     protected $hidden = [
@@ -72,6 +77,10 @@ class Customer extends BaseModel implements
     protected $casts = [
         'status' => CustomerStatusEnum::class,
         'dob' => 'date',
+        'is_affiliate' => 'boolean',
+        'affiliate_status' => AffiliateStatusEnum::class,
+        'affiliate_applied_at' => 'datetime',
+        'affiliate_status_changed_at' => 'datetime',
     ];
 
     public function sendPasswordResetNotification($token): void
@@ -194,6 +203,15 @@ class Customer extends BaseModel implements
     public function deletionRequest(): HasOne
     {
         return $this->hasOne(CustomerDeletionRequest::class, 'customer_id');
+    }
+
+    public function setAffiliateStatusAttribute($value): void
+    {
+        if ($this->exists && (string)$this->affiliate_status != (string)$value) {
+            $this->attributes['affiliate_status_changed_at'] = now();
+        }
+
+        $this->attributes['affiliate_status'] = $value;
     }
 
     public function commissions(): HasMany
