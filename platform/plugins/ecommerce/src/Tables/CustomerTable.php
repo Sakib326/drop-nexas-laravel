@@ -60,7 +60,12 @@ class CustomerTable extends TableAbstract
                 );
             })
             ->editColumn('affiliate_status', function (Customer $item) {
-                return $item->is_affiliate ? $item->affiliate_status->toHtml() : '&mdash;';
+                $statusRaw = $item->getRawOriginal('affiliate_status');
+                if (! $item->is_affiliate || ! $statusRaw) {
+                    return '&mdash;';
+                }
+
+                return $item->affiliate_status->toHtml();
             })
             ->editColumn('affiliate_applied_at', function (Customer $item) {
                 return $item->affiliate_applied_at ? $item->affiliate_applied_at->translatedFormat('Y-m-d H:i') : '&mdash;';
@@ -69,8 +74,6 @@ class CustomerTable extends TableAbstract
                 return $item->affiliate_status_changed_at ? $item->affiliate_status_changed_at->translatedFormat('Y-m-d H:i') : '&mdash;';
             });
 
-        \Illuminate\Support\Facades\Log::info('CustomerTable SQL: ' . $this->query()->toSql());
-        \Illuminate\Support\Facades\Log::info('CustomerTable Bindings: ' . json_encode($this->query()->getBindings()));
 
         return $this->toJson($data);
     }
@@ -210,10 +213,10 @@ class CustomerTable extends TableAbstract
     ) {
         if ($key == 'is_pending_affiliate') {
             if ($value == '1') {
-                return $query->where('is_affiliate', 1)->where('affiliate_status', \Botble\Ecommerce\Enums\AffiliateStatusEnum::PENDING);
+                return $query->where('affiliate_status', \Botble\Ecommerce\Enums\AffiliateStatusEnum::PENDING);
             }
             return $query->where(function ($q) {
-                $q->where('is_affiliate', 0)->orWhere('affiliate_status', '!=', \Botble\Ecommerce\Enums\AffiliateStatusEnum::PENDING);
+                $q->whereNull('affiliate_status')->orWhere('affiliate_status', '!=', \Botble\Ecommerce\Enums\AffiliateStatusEnum::PENDING);
             });
         }
 

@@ -207,8 +207,19 @@ class Customer extends BaseModel implements
 
     public function setAffiliateStatusAttribute($value): void
     {
-        if ($this->exists && (string)$this->affiliate_status != (string)$value) {
-            $this->attributes['affiliate_status_changed_at'] = now();
+        $value = $value ?: null;
+
+        if ($this->exists) {
+            $oldValue = $this->getRawOriginal('affiliate_status');
+
+            if ((string)$oldValue != (string)$value) {
+                $this->attributes['affiliate_status_changed_at'] = now();
+            }
+        }
+
+        // If is_affiliate is being set to true but status is empty, default to pending
+        if ($this->is_affiliate && empty($value)) {
+            $value = AffiliateStatusEnum::PENDING;
         }
 
         $this->attributes['affiliate_status'] = $value;

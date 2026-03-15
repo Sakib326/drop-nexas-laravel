@@ -18,6 +18,8 @@ class CustomerEditRequest extends Request
                 new EmailRule(),
                 Rule::unique((new Customer())->getTable(), 'email')->ignore($this->route('customer.id')),
             ],
+            'is_affiliate' => ['nullable', 'boolean'],
+            'affiliate_status' => ['nullable', Rule::in(\Botble\Ecommerce\Enums\AffiliateStatusEnum::values())],
         ];
 
         if ($this->boolean('is_change_password')) {
