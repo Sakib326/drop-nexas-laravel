@@ -397,68 +397,114 @@
         font-size: 14px;
     }
 
-    /* Tree View Styles */
+    /* ============================================
+       GLOBAL DRILL-DOWN NAVIGATION STYLES
+       ============================================ */
+    .downline-breadcrumb-wrapper {
+        background: #f8f9fa;
+        padding: 12px 15px;
+        border-radius: 8px;
+        border: 1px solid #ececec;
+        margin-bottom: 20px;
+    }
+
+    .downline-breadcrumb-wrapper .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    .downline-breadcrumb-wrapper .breadcrumb-item {
+        font-size: 13px;
+        color: #7E7E7E;
+    }
+
+    .downline-breadcrumb-wrapper .breadcrumb-item a {
+        color: #3BB77E;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .downline-breadcrumb-wrapper .breadcrumb-item.active {
+        color: #253D4E;
+        font-weight: 700;
+    }
+
     .tree-node {
         margin-left: 0;
-        padding: 10px 0;
+        padding: 2px 0;
     }
 
     .node-content {
         display: flex;
         align-items: center;
-        padding: 12px;
+        padding: 10px 15px;
         background: #fff;
         border: 1px solid #ececec;
         border-radius: 8px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         transition: all 0.3s ease;
     }
 
     .node-content:hover {
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-color: #3BB77E;
+    }
+
+    .node-content.root-node {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border: none;
+    }
+
+    .node-content.root-node .node-icon {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .node-content.root-node .node-info strong,
+    .node-content.root-node .node-info small {
+        color: #fff;
     }
 
     .expand-btn {
-        width: 30px;
-        height: 30px;
-        border-radius: 6px;
-        border: 1px solid #ececec;
-        background: #fff;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        background: #f0f4f2;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        margin-right: 10px;
+        margin-right: 12px;
         flex-shrink: 0;
         transition: all 0.3s ease;
+        color: #3BB77E;
+        font-size: 12px;
     }
 
     .expand-btn:hover:not(:disabled) {
         background: #3BB77E;
-        border-color: #3BB77E;
         color: #fff;
     }
 
     .expand-btn:disabled {
-        opacity: 0.5;
+        opacity: 0.3;
         cursor: not-allowed;
     }
 
     .node-icon {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #e7f3ff;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 12px;
         flex-shrink: 0;
-    }
-
-    .node-icon i {
-        color: #fff;
-        font-size: 18px;
+        color: #0066cc;
+        font-size: 16px;
     }
 
     .node-info {
@@ -470,7 +516,8 @@
         display: block;
         color: #253D4E;
         font-size: 14px;
-        margin-bottom: 3px;
+        margin-bottom: 2px;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
@@ -478,8 +525,8 @@
     .node-info small {
         display: block;
         color: #7E7E7E;
-        font-size: 12px;
-        line-height: 1.4;
+        font-size: 11px;
+        line-height: 1.3;
     }
 
     .node-stats {
@@ -487,24 +534,42 @@
         flex-shrink: 0;
     }
 
-    .tree-children {
-        padding-left: 15px;
-        border-left: 2px dashed #e0e0e0;
-        margin-left: 15px;
+    .node-stats .badge {
+        font-size: 10px;
+        padding: 4px 8px;
     }
 
-    .root-node {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: #fff;
+    .loading-indicator {
+        text-align: center;
+        padding: 30px;
+        color: #3BB77E;
+        font-size: 16px;
     }
 
-    .root-node .node-icon {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .root-node .node-info strong,
-    .root-node .node-info small {
-        color: #fff;
+    @media (max-width: 767px) {
+        .node-content {
+            padding: 8px 12px;
+        }
+        
+        .node-info strong {
+            font-size: 13px;
+        }
+        
+        .node-info small {
+            font-size: 10px;
+        }
+        
+        .node-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+        }
+        
+        .expand-btn {
+            width: 26px;
+            height: 26px;
+            margin-right: 8px;
+        }
     }
 
     /* Mobile Breakpoints */
@@ -655,36 +720,8 @@
             border-bottom: none;
         }
 
-        /* Tree View Mobile */
-        .node-content {
-            padding: 10px;
-            flex-wrap: wrap;
-        }
 
-        .node-icon {
-            width: 35px;
-            height: 35px;
-            margin-right: 10px;
-        }
-
-        .node-icon i {
-            font-size: 16px;
-        }
-
-        .node-info strong {
-            font-size: 13px;
-        }
-
-        .node-info small {
-            font-size: 11px;
-        }
-
-        .tree-children {
-            padding-left: 10px;
-            margin-left: 10px;
-        }
-
-        /* Navigation Menu Mobile */
+    /* Navigation Menu Mobile */
         .affiliate-dashboard-page .dashboard-menu .nav-link {
             padding: 10px 12px;
             font-size: 13px;

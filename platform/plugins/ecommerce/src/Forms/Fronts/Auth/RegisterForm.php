@@ -64,6 +64,7 @@ class RegisterForm extends AuthForm
                     ->label(__('Referral Username (Optional)'))
                     ->placeholder(__('Enter referrer username if you have one'))
                     ->icon('ti ti-users')
+                    ->addAttribute('readonly', 'readonly')
             )
             ->when(! EcommerceHelper::isLoginUsingPhone() || get_ecommerce_setting('keep_email_field_in_registration_form', true), function (FormAbstract $form): void {
                 $form

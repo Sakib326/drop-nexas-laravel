@@ -57,8 +57,15 @@
                             <h3 class="mb-0">{{ __('My Contributor Partners Network') }}</h3>
                         </div>
                         <div class="card-body">
+                            {{-- Breadcrumbs for Drill-down --}}
+                            <nav aria-label="breadcrumb" class="downline-breadcrumb-wrapper mb-4" id="downlineBreadcrumb" style="display: none;">
+                                <ol class="breadcrumb mb-0">
+                                    <li class="breadcrumb-item"><a href="#" data-username="root">{{ __('Home') }}</a></li>
+                                </ol>
+                            </nav>
+
                             {{-- Search Form --}}
-                            <form method="GET" class="mb-4">
+                            <form method="GET" class="mb-4" id="downlineSearchForm">
                                 <div class="row">
                                     <div class="col-md-9">
                                         <input type="text" name="search" class="form-control"
@@ -74,64 +81,60 @@
                             </form>
 
                             {{-- Tree View --}}
-                            <div class="downline-tree">
-                                {{-- Root User --}}
-                                <div class="tree-node level-0">
-                                    <div class="node-content root-node">
-                                        <div class="node-icon">
-                                            <i class="fi-rs-user"></i>
-                                        </div>
-                                        <div class="node-info">
-                                            <strong>{{ $customer->name }}</strong> <span
-                                                class="badge bg-primary">{{ __('You') }}</span>
-                                            <br>
-                                            <small class="text-muted">{{ '@' . $customer->username }}</small>
-                                        </div>
-                                        <div class="node-stats">
-                                            <span class="badge bg-info">{{ $referrals->total() }}
-                                                {{ __('referrals') }}</span>
+                            <div class="downline-tree" id="downlineTree">
+                                {{-- Root Node Info (Hidden when drilled down) --}}
+                                <div id="rootNodeWrapper">
+                                    <div class="tree-node level-0">
+                                        <div class="node-content root-node">
+                                            <div class="node-icon">
+                                                <i class="fi-rs-user"></i>
+                                            </div>
+                                            <div class="node-info">
+                                                <strong>{{ $customer->name }}</strong> <span
+                                                    class="badge bg-primary">{{ __('You') }}</span>
+                                                <br>
+                                                <small class="text-muted">{{ '@' . $customer->username }}</small>
+                                            </div>
+                                            <div class="node-stats">
+                                                <span class="badge bg-info">{{ $referrals->total() }}
+                                                    {{ __('referrals') }}</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <h4 class="mt-4 mb-3">{{ __('Your Direct Referrals') }}</h4>
+                                </div>
 
-                                    {{-- Direct Referrals --}}
+                                {{-- Active List Container --}}
+                                <div id="downlineList">
                                     @if ($referrals->count() > 0)
-                                        <div class="tree-children">
-                                            @foreach ($referrals as $referral)
-                                                <div class="tree-node level-1"
-                                                    data-username="{{ $referral->username }}">
-                                                    <div class="node-content">
-                                                        <button class="expand-btn"
-                                                            @if ($referral->referrals_count > 0) data-username="{{ $referral->username }}"
-                                                                @else
-                                                                    disabled @endif>
-                                                            <i
-                                                                class="fi-rs-{{ $referral->referrals_count > 0 ? 'plus' : 'minus' }}-small"></i>
-                                                        </button>
-                                                        <div class="node-icon">
-                                                            <i class="fi-rs-user"></i>
-                                                        </div>
-                                                        <div class="node-info">
-                                                            <strong>{{ $referral->name }}</strong>
-                                                            <br>
-                                                            <small
-                                                                class="text-muted">{{ '@' . $referral->username }}</small>
-                                                            <br>
-                                                            <small class="text-muted">{{ __('Joined') }}:
-                                                                {{ $referral->created_at->format('M d, Y') }}</small>
-                                                        </div>
-                                                        <div class="node-stats">
-                                                            @if ($referral->referrals_count > 0)
-                                                                <span
-                                                                    class="badge bg-success">{{ $referral->referrals_count }}
-                                                                    {{ __('referrals') }}</span>
-                                                            @endif
-                                                        </div>
+                                        @foreach ($referrals as $referral)
+                                            <div class="tree-node list-item" data-username="{{ $referral->username }}" data-name="{{ $referral->name }}">
+                                                <div class="node-content">
+                                                    <button class="expand-btn"
+                                                        @if ($referral->referrals_count > 0) data-username="{{ $referral->username }}"
+                                                            @else
+                                                                disabled @endif>
+                                                        <i class="fi-rs-{{ $referral->referrals_count > 0 ? 'plus' : 'minus' }}-small"></i>
+                                                    </button>
+                                                    <div class="node-icon">
+                                                        <i class="fi-rs-user"></i>
                                                     </div>
-                                                    {{-- Placeholder for lazy-loaded children --}}
-                                                    <div class="tree-children" style="display: none;"></div>
+                                                    <div class="node-info">
+                                                        <strong>{{ $referral->name }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{ '@' . $referral->username }}</small>
+                                                        <br>
+                                                        <small class="text-muted">{{ __('Joined') }}:
+                                                            {{ $referral->created_at->format('M d, Y') }}</small>
+                                                    </div>
+                                                    <div class="node-stats">
+                                                        @if ($referral->referrals_count > 0)
+                                                            <span class="badge bg-success">{{ $referral->referrals_count }} {{ __('referrals') }}</span>
+                                                        @endif
+                                                    </div>
                                                 </div>
-                                            @endforeach
-                                        </div>
+                                            </div>
+                                        @endforeach
                                     @else
                                         <div class="text-center py-4">
                                             <p class="text-muted">{{ __('No referrals yet.') }}</p>
@@ -140,12 +143,14 @@
                                 </div>
                             </div>
 
-                            {{-- Pagination --}}
-                            @if ($referrals->hasPages())
-                                <div class="mt-4">
-                                    {{ $referrals->links() }}
-                                </div>
-                            @endif
+                            {{-- Pagination (Only at root) --}}
+                            <div id="paginationWrapper">
+                                @if ($referrals->hasPages())
+                                    <div class="mt-4">
+                                        {{ $referrals->links() }}
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -153,8 +158,6 @@
         </div>
     </div>
 </div>
-
-@include('plugins/ecommerce::themes.affiliate.affiliate-responsive')
 
 <style>
     .downline-tree {
@@ -166,20 +169,14 @@
         position: relative;
     }
 
-    .tree-node.level-1,
-    .tree-node.level-2,
-    .tree-node.level-3 {
-        margin-left: 40px;
-    }
-
     .node-content {
         display: flex;
         align-items: center;
-        padding: 15px;
+        padding: 10px 15px;
         background: #fff;
         border: 1px solid #e0e0e0;
         border-radius: 8px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         transition: all 0.3s ease;
     }
 
@@ -201,15 +198,16 @@
     .expand-btn {
         background: #f0f0f0;
         border: none;
-        width: 30px;
-        height: 30px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        margin-right: 10px;
+        margin-right: 8px;
         transition: all 0.3s ease;
+        font-size: 12px;
     }
 
     .expand-btn:not(:disabled):hover {
@@ -222,22 +220,17 @@
         cursor: not-allowed;
     }
 
-    .expand-btn.expanded i:before {
-        content: "\f286" !important;
-        /* minus icon */
-    }
-
     .node-icon {
-        width: 45px;
-        height: 45px;
+        width: 32px;
+        height: 32px;
         background: #3BB77E;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 15px;
+        margin-right: 12px;
         color: white;
-        font-size: 20px;
+        font-size: 14px;
     }
 
     .root-node .node-icon {
@@ -246,139 +239,175 @@
 
     .node-info {
         flex: 1;
+        line-height: 1.2;
+    }
+
+    .node-info strong {
+        font-size: 14px;
+    }
+
+    .node-info small {
+        font-size: 11px;
     }
 
     .node-stats {
-        margin-left: 10px;
+        margin-left: 8px;
     }
 
-    .tree-children {
-        padding-left: 20px;
-        border-left: 2px dashed #e0e0e0;
-        margin-left: 20px;
+    .node-stats .badge {
+        font-size: 10px;
+        padding: 4px 8px;
     }
 
     .loading-indicator {
         text-align: center;
-        padding: 10px;
+        padding: 20px;
         color: #999;
     }
 </style>
 
+@include('plugins/ecommerce::themes.affiliate.affiliate-responsive')
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const loadedNodes = new Set();
+        const listContainer = document.getElementById('downlineList');
+        const paginationWrapper = document.getElementById('paginationWrapper');
+        
+        if (!listContainer || !paginationWrapper) return;
 
-        document.querySelectorAll('.expand-btn:not(:disabled)').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const username = this.getAttribute('data-username');
-                const treeNode = this.closest('.tree-node');
-                const childrenContainer = treeNode.querySelector('.tree-children');
+        const initialRootHtml = listContainer.innerHTML;
+        const initialPaginationHtml = paginationWrapper.innerHTML;
 
-                if (this.classList.contains('expanded')) {
-                    // Collapse
-                    this.classList.remove('expanded');
-                    childrenContainer.style.display = 'none';
+        const rootUsername = 'root';
+        const rootName = '{{ $customer->name }}';
+
+        let navigationStack = [{
+            username: rootUsername,
+            name: rootName,
+            html: initialRootHtml,
+            paginationHtml: initialPaginationHtml
+        }];
+
+        const breadcrumbContainer = document.getElementById('downlineBreadcrumb');
+        const breadcrumbList = breadcrumbContainer.querySelector('.breadcrumb');
+        const searchForm = document.getElementById('downlineSearchForm');
+        const rootWrapper = document.getElementById('rootNodeWrapper');
+
+        function updateBreadcrumbs() {
+            if (navigationStack.length <= 1) {
+                breadcrumbContainer.style.display = 'none';
+                return;
+            }
+
+            breadcrumbContainer.style.display = 'block';
+            let html = '';
+            navigationStack.forEach((item, index) => {
+                if (index === navigationStack.length - 1) {
+                    html += `<li class="breadcrumb-item active" aria-current="page">${item.name}</li>`;
                 } else {
-                    // Expand
-                    this.classList.add('expanded');
-                    childrenContainer.style.display = 'block';
-
-                    // Load children if not already loaded
-                    if (!loadedNodes.has(username)) {
-                        loadChildren(username, childrenContainer);
-                        loadedNodes.add(username);
-                    }
+                    html +=
+                        `<li class="breadcrumb-item"><a href="#" data-index="${index}">${item.name}</a></li>`;
                 }
             });
-        });
+            breadcrumbList.innerHTML = html;
 
-        function loadChildren(username, container) {
-            console.log('Loading children for:', username);
-            container.innerHTML =
+            breadcrumbList.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    navigateToIndex(parseInt(this.getAttribute('data-index')));
+                });
+            });
+        }
+
+        function navigateToIndex(index) {
+            const target = navigationStack[index];
+            navigationStack = navigationStack.slice(0, index + 1);
+
+            listContainer.innerHTML = target.html;
+            paginationWrapper.innerHTML = target.paginationHtml || '';
+
+            if (target.username === rootUsername) {
+                rootWrapper.style.display = 'block';
+                searchForm.style.display = 'block';
+            } else {
+                rootWrapper.style.display = 'none';
+                searchForm.style.display = 'none';
+            }
+
+            attachEventListeners();
+            updateBreadcrumbs();
+        }
+
+        function handleExpandClick(btn) {
+            const username = btn.getAttribute('data-username');
+            const name = btn.closest('.node-content').querySelector('.node-info strong').innerText;
+
+            listContainer.innerHTML =
                 '<div class="loading-indicator"><i class="fi-rs-loading"></i> {{ __('Loading...') }}</div>';
+            rootWrapper.style.display = 'none';
+            searchForm.style.display = 'none';
+            paginationWrapper.innerHTML = '';
 
             fetch(`{{ url('affiliate/downline') }}/${username}/children`)
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    console.log('Received data:', data);
+                    let html = '';
                     if (data.length === 0) {
-                        container.innerHTML =
-                            '<div class="text-center py-2"><small class="text-muted">{{ __('No referrals') }}</small></div>';
-                        return;
+                        html =
+                            '<div class="text-center py-4"><p class="text-muted">{{ __('No referrals found for this partner.') }}</p></div>';
+                    } else {
+                        data.forEach(child => {
+                            html += `
+                                <div class="tree-node list-item" data-username="${child.username}">
+                                    <div class="node-content">
+                                        <button class="expand-btn" ${child.has_children ? `data-username="${child.username}"` : 'disabled'}>
+                                            <i class="fi-rs-${child.has_children ? 'plus' : 'minus'}-small"></i>
+                                        </button>
+                                        <div class="node-icon">
+                                            <i class="fi-rs-user"></i>
+                                        </div>
+                                        <div class="node-info">
+                                            <strong>${child.name}</strong><br>
+                                            <small class="text-muted">${'@' + child.username}</small><br>
+                                            <small class="text-muted">{{ __('Joined') }}: ${child.created_at}</small>
+                                        </div>
+                                        <div class="node-stats">
+                                            ${child.referrals_count > 0 ? `<span class="badge bg-success">${child.referrals_count} {{ __('referrals') }}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
                     }
 
-                    let html = '';
-                    data.forEach(child => {
-                        html += `
-                        <div class="tree-node" data-username="${child.username}">
-                            <div class="node-content">
-                                <button class="expand-btn" ${child.has_children ? `data-username="${child.username}"` : 'disabled'}>
-                                    <i class="fi-rs-${child.has_children ? 'plus' : 'minus'}-small"></i>
-                                </button>
-                                <div class="node-icon">
-                                    <i class="fi-rs-user"></i>
-                                </div>
-                                <div class="node-info">
-                                    <strong>${child.name}</strong><br>
-                                    <small class="text-muted">${'@' + child.username}</small><br>
-                                    <small class="text-muted">{{ __('Joined') }}: ${child.created_at}</small>
-                                </div>
-                                <div class="node-stats">
-                                    ${child.referrals_count > 0 ? `<span class="badge bg-success">${child.referrals_count} {{ __('referrals') }}</span>` : ''}
-                                </div>
-                            </div>
-                            <div class="tree-children" style="display: none;"></div>
-                        </div>
-                    `;
+                    navigationStack.push({
+                        username: username,
+                        name: name,
+                        html: html,
+                        paginationHtml: ''
                     });
 
-                    container.innerHTML = html;
-
-                    // Attach event listeners to new expand buttons
-                    const newButtons = container.querySelectorAll('.expand-btn:not(:disabled)');
-                    console.log('Attaching listeners to', newButtons.length, 'new buttons');
-
-                    newButtons.forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            console.log('Button clicked for:', this.getAttribute(
-                                'data-username'));
-                            const username = this.getAttribute('data-username');
-                            const treeNode = this.closest('.tree-node');
-                            const childrenContainer = treeNode.querySelector(
-                                '.tree-children');
-
-                            if (this.classList.contains('expanded')) {
-                                // Collapse
-                                console.log('Collapsing node');
-                                this.classList.remove('expanded');
-                                childrenContainer.style.display = 'none';
-                            } else {
-                                // Expand
-                                console.log('Expanding node');
-                                this.classList.add('expanded');
-                                childrenContainer.style.display = 'block';
-
-                                if (!loadedNodes.has(username)) {
-                                    console.log('Loading new children for:', username);
-                                    loadChildren(username, childrenContainer);
-                                    loadedNodes.add(username);
-                                } else {
-                                    console.log('Children already loaded for:', username);
-                                }
-                            }
-                        });
-                    });
+                    listContainer.innerHTML = html;
+                    attachEventListeners();
+                    updateBreadcrumbs();
                 })
                 .catch(error => {
-                    console.error('Error loading children:', error);
-                    container.innerHTML =
-                        '<div class="text-center py-2 text-danger"><small>{{ __('Error loading data') }}</small></div>';
+                    console.error('Error:', error);
+                    listContainer.innerHTML =
+                        '<div class="text-center py-4 text-danger"><p>{{ __('Error loading data. Please try again.') }}</p></div>';
                 });
         }
+
+        function attachEventListeners() {
+            listContainer.querySelectorAll('.expand-btn:not(:disabled)').forEach(btn => {
+                btn.onclick = function() {
+                    handleExpandClick(this);
+                };
+            });
+        }
+
+        // Initial attachment
+        attachEventListeners();
 
         // Mobile Menu Toggle Functionality
         const toggleBtn = document.getElementById('mobileMenuToggle');
