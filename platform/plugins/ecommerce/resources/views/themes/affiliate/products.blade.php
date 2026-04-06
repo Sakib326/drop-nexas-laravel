@@ -145,8 +145,6 @@
                                                         <span class="text-success">
                                                             <strong>{{ format_price($profit) }}</strong>
                                                         </span>
-                                                        <br>
-                                                        <small class="text-muted">(50% {{ __('commission') }})</small>
                                                     @else
                                                         <span class="text-muted">
                                                             <small>{{ __('No commission') }}</small>

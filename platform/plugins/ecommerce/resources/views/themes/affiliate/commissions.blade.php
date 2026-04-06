@@ -72,44 +72,13 @@
                             {{-- Filters --}}
                             <form method="GET" class="mb-4">
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <select name="status" class="form-control">
-                                            <option value="">{{ __('All Status') }}</option>
-                                            <option value="pending"
-                                                {{ request('status') == 'pending' ? 'selected' : '' }}>
-                                                {{ __('Pending') }}</option>
-                                            <option value="approved"
-                                                {{ request('status') == 'approved' ? 'selected' : '' }}>
-                                                {{ __('Approved') }}</option>
-                                            <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>
-                                                {{ __('Paid') }}</option>
-                                            <option value="returned"
-                                                {{ request('status') == 'returned' ? 'selected' : '' }}>
-                                                {{ __('Returned') }}</option>
-                                            <option value="rejected"
-                                                {{ request('status') == 'rejected' ? 'selected' : '' }}>
-                                                {{ __('Rejected') }}</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <select name="type" class="form-control">
-                                            <option value="">{{ __('All Types') }}</option>
-                                            <option value="direct_sale"
-                                                {{ request('type') == 'direct_sale' ? 'selected' : '' }}>
-                                                {{ __('Direct Sale') }}</option>
-                                            <option value="downline_level_1"
-                                                {{ request('type') == 'downline_level_1' ? 'selected' : '' }}>
-                                                {{ __('Level 1') }}</option>
-                                            <option value="downline_level_2"
-                                                {{ request('type') == 'downline_level_2' ? 'selected' : '' }}>
-                                                {{ __('Level 2') }}</option>
-                                        </select>
-                                    </div>
                                     <div class="col-md-2">
+                                        <label> {{ __('From') }}</label>
                                         <input type="date" name="from" class="form-control"
                                             value="{{ request('from') }}" placeholder="{{ __('From') }}">
                                     </div>
                                     <div class="col-md-2">
+                                        <label>{{ __('To') }}</label>
                                         <input type="date" name="to" class="form-control"
                                             value="{{ request('to') }}" placeholder="{{ __('To') }}">
                                     </div>
@@ -128,7 +97,6 @@
                                         <tr>
                                             <th>{{ __('Date') }}</th>
                                             <th>{{ __('Order/Product') }}</th>
-                                            <th>{{ __('Type') }}</th>
                                             <th>{{ __('Amount') }}</th>
                                             <th>{{ __('Status') }}</th>
                                         </tr>
@@ -150,22 +118,10 @@
                                                         <small
                                                             class="text-muted">{{ $commission->product->name }}</small>
                                                     @endif
-                                                </td>
-                                                <td>
-                                                    @if ($commission->commission_type == 'direct_sale')
-                                                        <span class="badge bg-primary">{{ __('Direct Sale') }}</span>
-                                                    @elseif($commission->commission_type == 'downline_level_1')
-                                                        <span class="badge bg-info">{{ __('Level 1') }}</span>
-                                                    @elseif($commission->commission_type == 'downline_level_2')
-                                                        <span class="badge bg-secondary">{{ __('Level 2') }}</span>
-                                                    @endif
-                                                </td>
+                                                </td> 
                                                 <td>
                                                     <strong
                                                         class="text-success">{{ format_price($commission->commission_amount) }}</strong>
-                                                    <br>
-                                                    <small
-                                                        class="text-muted">{{ $commission->commission_rate }}%</small>
                                                 </td>
                                                 <td>
                                                     @if ($commission->status == 'pending')
