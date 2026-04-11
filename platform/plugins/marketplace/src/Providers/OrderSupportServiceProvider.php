@@ -1344,14 +1344,6 @@ class OrderSupportServiceProvider extends ServiceProvider
                 continue;
             }
 
-            // Product-level commission has highest priority.
-            if ($product->marketplace_commission_fee !== null) {
-                $commissionFeePercentage = (float) $product->marketplace_commission_fee;
-                $totalFee += $orderProduct->price * $commissionFeePercentage / 100;
-
-                continue;
-            }
-
             $listCategories = $product->categories()->pluck('category_id')->all();
 
             $commissionFeePercentage = MarketplaceHelper::getSetting('fee_per_order', 0);
