@@ -1258,7 +1258,16 @@ class OrderSupportServiceProvider extends ServiceProvider
 
     public function afterOrderStatusCompleted(Order $order)
     {
-        $order->loadMissing(['store', 'store.customer']);
+        $order->loadMissing([
+            'store',
+            'store.customer',
+            'products',
+            'products.product',
+            'products.product.variationInfo',
+            'products.product.variationInfo.configurableProduct',
+            'products.product.variationInfo.configurableProduct.categories',
+            'products.product.categories',
+        ]);
 
         if ($order->store?->id && $order->store->customer->id) {
             $customer = $order->store->customer;
@@ -1350,8 +1359,22 @@ class OrderSupportServiceProvider extends ServiceProvider
                 continue;
             }
 
-            // For order returns, use refund_amount. For normal order lines, use price.
-            $lineAmount = (float) ($orderProduct->refund_amount ?? $orderProduct->price ?? 0);
+            // For order returns use refund_amount; for normal order lines multiply price × qty.
+            if ($orderProduct instanceof \Botble\Ecommerce\Models\OrderReturnItem) {
+                $lineAmount = (float) ($orderProduct->refund_amount ?? 0);
+            } else {
+                $price = (float) ($orderProduct->price ?? 0);
+                $qty   = max(1, (int) ($orderProduct->qty ?? 1));
+                $lineAmount = $price * $qty;
+            }
+
+            Log::channel('daily')->info('[Commission] Product line', [
+                'product_id' => $product->id ?? null,
+                'type'       => $orderProduct instanceof \Botble\Ecommerce\Models\OrderReturnItem ? 'return' : 'order',
+                'price'      => $orderProduct->price ?? null,
+                'qty'        => $orderProduct->qty ?? null,
+                'lineAmount' => $lineAmount,
+            ]);
 
             if ($lineAmount <= 0) {
                 continue;
@@ -1360,7 +1383,16 @@ class OrderSupportServiceProvider extends ServiceProvider
             // Product-level commission has highest priority.
             if ($product->marketplace_commission_fee !== null) {
                 $commissionFeePercentage = (float) $product->marketplace_commission_fee;
-                $totalFee += $lineAmount * $commissionFeePercentage / 100;
+                $lineFee = $lineAmount * $commissionFeePercentage / 100;
+                $totalFee += $lineFee;
+
+                Log::channel('daily')->info('[Commission] Product-level rate', [
+                    'product_id' => $product->id,
+                    'rate%'      => $commissionFeePercentage,
+                    'lineAmount' => $lineAmount,
+                    'lineFee'    => $lineFee,
+                    'totalFee'   => $totalFee,
+                ]);
 
                 continue;
             }
@@ -1373,12 +1405,25 @@ class OrderSupportServiceProvider extends ServiceProvider
                 ->latest('commission_percentage')
                 ->value('commission_percentage');
 
+            $rateSource = 'global';
             if ($commissionSetting) {
                 $commissionFeePercentage = $commissionSetting;
+                $rateSource = 'category';
             }
 
-            $totalFee += $lineAmount * $commissionFeePercentage / 100;
+            $lineFee = $lineAmount * $commissionFeePercentage / 100;
+            $totalFee += $lineFee;
+
+            Log::channel('daily')->info('[Commission] ' . $rateSource . ' rate', [
+                'product_id'  => $product->id,
+                'rate%'       => $commissionFeePercentage,
+                'lineAmount'  => $lineAmount,
+                'lineFee'     => $lineFee,
+                'totalFee'    => $totalFee,
+            ]);
         }
+
+        Log::channel('daily')->info('[Commission] TOTAL FEE', ['totalFee' => $totalFee]);
 
         return $totalFee;
     }
