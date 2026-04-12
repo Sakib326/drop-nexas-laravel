@@ -1338,9 +1338,30 @@ class OrderSupportServiceProvider extends ServiceProvider
     {
         $totalFee = 0;
         foreach ($orderProducts as $orderProduct) {
-            $product = $orderProduct->product->original_product;
+            $product = null;
+
+            if (isset($orderProduct->product)) {
+                $product = $orderProduct->product->original_product ?? $orderProduct->product;
+            } elseif (isset($orderProduct->original_product)) {
+                $product = $orderProduct->original_product;
+            }
 
             if (! $product) {
+                continue;
+            }
+
+            // For order returns, use refund_amount. For normal order lines, use price.
+            $lineAmount = (float) ($orderProduct->refund_amount ?? $orderProduct->price ?? 0);
+
+            if ($lineAmount <= 0) {
+                continue;
+            }
+
+            // Product-level commission has highest priority.
+            if ($product->marketplace_commission_fee !== null) {
+                $commissionFeePercentage = (float) $product->marketplace_commission_fee;
+                $totalFee += $lineAmount * $commissionFeePercentage / 100;
+
                 continue;
             }
 
@@ -1356,7 +1377,7 @@ class OrderSupportServiceProvider extends ServiceProvider
                 $commissionFeePercentage = $commissionSetting;
             }
 
-            $totalFee += $orderProduct->price * $commissionFeePercentage / 100;
+            $totalFee += $lineAmount * $commissionFeePercentage / 100;
         }
 
         return $totalFee;
@@ -1377,16 +1398,26 @@ class OrderSupportServiceProvider extends ServiceProvider
 
             if ($vendorInfo->id) {
                 $refundAmount = $orderReturn->items->sum('refund_amount');
-                // Exclude payment fee from refund amount if it exists
+                // Exclude payment fee from refund amount proportionally.
+                // For partial refunds, subtract only the allocated share of payment fee.
                 if ($order->payment_fee > 0) {
-                    $refundAmount = $refundAmount - $order->payment_fee;
+                    $commissionBase = max(0, (float) $order->amount - (float) $order->shipping_amount - (float) $order->tax_amount - (float) $order->payment_fee);
+
+                    if ($commissionBase > 0) {
+                        $refundRatio = min(1, max(0, (float) $refundAmount / $commissionBase));
+                        $allocatedPaymentFee = (float) $order->payment_fee * $refundRatio;
+                    } else {
+                        // If base cannot be determined safely, keep prior behavior for full-fee deduction.
+                        $allocatedPaymentFee = (float) $order->payment_fee;
+                    }
+
+                    $refundAmount = max(0, (float) $refundAmount - $allocatedPaymentFee);
                 }
                 if (! MarketplaceHelper::isCommissionCategoryFeeBasedEnabled()) {
                     $feePercentage = MarketplaceHelper::getSetting('fee_per_order', 0);
                     $fee = $refundAmount * ($feePercentage / 100);
                 } else {
-                    $products = $orderReturn->items->map(fn ($item) => $item->product);
-                    $fee = $this->calculatorCommissionFeeByProduct($products);
+                    $fee = $this->calculatorCommissionFeeByProduct($orderReturn->items);
                 }
                 $fee = $fee * -1;
                 $refundAmount = $refundAmount * -1;

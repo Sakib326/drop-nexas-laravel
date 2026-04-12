@@ -267,6 +267,7 @@ class ProductController extends BaseController
         $except = [
             'is_featured',
             'status',
+            'marketplace_commission_fee',
         ];
 
         foreach ($except as $item) {
