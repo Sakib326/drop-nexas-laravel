@@ -547,7 +547,7 @@ class HandleMarketplacePlatformFeeCalculated
             $percentage = (float) ($poolConfig['percentage'] ?? 0);
             $poolMax = ($baseAmount * $percentage) / 100;
             $maxDistributableAmount += $poolMax;
-            
+
             $commissionType = (string) ($poolConfig['commission_type'] ?? $poolKey);
             $stepBreakdown[$poolKey] = [
                 'max' => $poolMax,
