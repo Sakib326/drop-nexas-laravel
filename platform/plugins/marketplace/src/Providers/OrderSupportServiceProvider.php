@@ -2,6 +2,7 @@
 
 namespace Botble\Marketplace\Providers;
 
+use App\Events\MarketplacePlatformFeeCalculated;
 use Botble\Base\Facades\BaseHelper;
 use Botble\Base\Facades\EmailHandler;
 use Botble\Base\Http\Responses\BaseHttpResponse;
@@ -1306,6 +1307,9 @@ class OrderSupportServiceProvider extends ServiceProvider
                     'type' => RevenueTypeEnum::ADD_AMOUNT,
                 ];
 
+                $processedRevenue = null;
+                $revenueWasCreated = false;
+
                 try {
                     DB::beginTransaction();
 
@@ -1315,12 +1319,14 @@ class OrderSupportServiceProvider extends ServiceProvider
                         $data['current_balance'] = $currentBalance - $revenueAmount;
                         $revenue->fill($data);
                         $revenue->save();
+                        $processedRevenue = $revenue;
                     } else {
-                        Revenue::query()->create(
+                        $processedRevenue = Revenue::query()->create(
                             array_merge([
                                 'order_id' => $order->getKey(),
                             ], $data)
                         );
+                        $revenueWasCreated = true;
 
                         $vendorInfo->total_revenue += $amountByCurrency;
                     }
@@ -1336,6 +1342,10 @@ class OrderSupportServiceProvider extends ServiceProvider
                     return BaseHttpResponse::make()
                         ->setError()
                         ->setMessage($th->getMessage());
+                }
+
+                if ($processedRevenue) {
+                    event(new MarketplacePlatformFeeCalculated($processedRevenue, $order, $revenueWasCreated));
                 }
             }
         }
