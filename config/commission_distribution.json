@@ -1,0 +1,88 @@
+{
+    "steps": [
+        "referral_commissions",
+        "level_7_plus_pool",
+        "global_thrive_pool",
+        "pathfinder_pool",
+        "galaxy_pulse_pool",
+        "empire_builder_pool"
+    ],
+    "levels": {
+        "1": {
+            "slug": "spark",
+            "name": "Spark",
+            "threshold": 0
+        },
+        "2": {
+            "slug": "flare",
+            "name": "Flare",
+            "threshold": 10000
+        },
+        "3": {
+            "slug": "blaze",
+            "name": "Blaze",
+            "threshold": 30000
+        },
+        "4": {
+            "slug": "pathfinder",
+            "name": "Pathfinder",
+            "threshold": 70000
+        },
+        "5": {
+            "slug": "global_thrive",
+            "name": "Global Thrive",
+            "threshold": 1000000
+        },
+        "6": {
+            "slug": "galaxy_pulse",
+            "name": "Galaxy Pulse",
+            "threshold": 10000000
+        },
+        "7": {
+            "slug": "empire_builder",
+            "name": "Empire Builder",
+            "threshold": 100000000
+        }
+    },
+    "referral": {
+        "direct_levels_max": 6,
+        "requires_affiliate_approval": true,
+        "commission_type_pattern": "referral_level_%d",
+        "level_7_plus_context_key": "level7_plus_users",
+        "level_rates": {
+            "1": 50,
+            "2": 10,
+            "3": 5,
+            "4": 3,
+            "5": 2,
+            "6": 2
+        }
+    },
+    "pools": {
+        "level_7_plus_pool": {
+            "commission_type": "referral_level_7_plus",
+            "percentage": 2,
+            "users_context_key": "level7_plus_users"
+        },
+        "global_thrive_pool": {
+            "commission_type": "global_thrive_pool",
+            "percentage": 1,
+            "eligible_level_slugs": ["global_thrive"]
+        },
+        "pathfinder_pool": {
+            "commission_type": "pathfinder_pool",
+            "percentage": 2,
+            "eligible_level_slugs": ["pathfinder"]
+        },
+        "galaxy_pulse_pool": {
+            "commission_type": "galaxy_pulse_pool",
+            "percentage": 1,
+            "eligible_level_slugs": ["galaxy_pulse"]
+        },
+        "empire_builder_pool": {
+            "commission_type": "empire_builder_pool",
+            "percentage": 2,
+            "eligible_level_slugs": ["empire_builder"]
+        }
+    }
+}
