@@ -54,7 +54,7 @@
                 <div class="tab-content account dashboard-content pl-50">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="mb-0">{{ __('My Contributor Partners Network') }}</h3>
+                            <h3 class="mb-0">{{ __('Drop Shipper Contributor Partners Network') }}</h3>
                         </div>
                         <div class="card-body">
                             {{-- Breadcrumbs for Drill-down --}}
@@ -272,7 +272,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const listContainer = document.getElementById('downlineList');
         const paginationWrapper = document.getElementById('paginationWrapper');
-        
+
         if (!listContainer || !paginationWrapper) return;
 
         const initialRootHtml = listContainer.innerHTML;

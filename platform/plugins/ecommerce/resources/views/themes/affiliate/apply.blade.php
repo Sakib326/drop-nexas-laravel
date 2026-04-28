@@ -55,7 +55,7 @@
                                         <x-core::icon name="ti ti-circle-x" class="text-danger" size="lg" style="width: 48px; height: 48px;" />
                                     </div>
                                 </div>
-                                <h3 class="h4 mb-3">{{ __('Application Status') }}</h3>
+                                <h3 class="h4 mb-3">{{ __('Drop Shipper Application') }}</h3>
                                 <p class="text-muted mb-4 px-lg-5">
                                     {{ __('We regret to inform you that your affiliate application was not approved at this time. You may re-apply if you believe your circumstances have changed.') }}
                                 </p>

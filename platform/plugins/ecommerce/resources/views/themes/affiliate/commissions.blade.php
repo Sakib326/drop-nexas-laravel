@@ -66,7 +66,7 @@
                 <div class="tab-content account dashboard-content pl-50">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h3 class="mb-0">{{ __('Commission History') }}</h3>
+                            <h3 class="mb-0">{{ __('Drop Shipper Commissions') }}</h3>
                         </div>
                         <div class="card-body">
                             {{-- Filters --}}
@@ -118,7 +118,7 @@
                                                         <small
                                                             class="text-muted">{{ $commission->product->name }}</small>
                                                     @endif
-                                                </td> 
+                                                </td>
                                                 <td>
                                                     <strong
                                                         class="text-success">{{ format_price($commission->commission_amount) }}</strong>

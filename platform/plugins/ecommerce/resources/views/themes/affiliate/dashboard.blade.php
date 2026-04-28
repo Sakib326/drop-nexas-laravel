@@ -66,14 +66,14 @@
                 <div class="tab-content account dashboard-content pl-50">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="mb-0">{{ __('Affiliate Dashboard') }}</h3>
+                            <h3 class="mb-0">{{ __('Drop Shipper Dashboard') }}</h3>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-lg-12">
                                     <div class="welcome-msg">
                                         <h5>{{ __('Hello, :name!', ['name' => $customer->name]) }}</h5>
-                                        <p class="mb-4">{{ __('Welcome to your affiliate dashboard.') }}</p>
+                                        <p class="mb-4">{{ __('Welcome to your drop shipper dashboard.') }}</p>
                                     </div>
                                 </div>
                             </div>

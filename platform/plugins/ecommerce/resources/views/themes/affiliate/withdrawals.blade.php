@@ -66,7 +66,7 @@
                 <div class="tab-content account dashboard-content pl-50">
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <h3 class="mb-0">{{ __('Withdrawal History') }}</h3>
+                            <h3 class="mb-0">{{ __('Drop Shipper Withdrawal Request') }}</h3>
                             <a href="{{ route('affiliate.withdrawal.request') }}"
                                 class="btn btn-primary btn-mobile-full mt-2 mt-md-0">
                                 <i class="fi-rs-plus"></i> {{ __('Request Withdrawal') }}
