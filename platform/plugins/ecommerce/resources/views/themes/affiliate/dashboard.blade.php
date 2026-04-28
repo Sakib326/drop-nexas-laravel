@@ -177,19 +177,24 @@
 
                                             {{-- Pool Eligibility --}}
                                             <div class="mt-3">
+                                                @php
+                                                    $poolConfig = App\Helpers\LevelConfigHelper::getPoolConfig();
+                                                    $empireBuilderName = $poolConfig['empire_builder_pool']['name'] ?? 'Empire Builder';
+                                                    $globalThriveName = $poolConfig['global_thrive_pool']['name'] ?? 'Global Thrive';
+                                                @endphp
                                                 @if ($customer->isEmpireBuilderEligible())
                                                     <span class="badge bg-danger me-2">
                                                         <i class="fi-rs-crown"></i>
-                                                        {{ __('Empire Builder Pool Member') }}
+                                                        {{ __($empireBuilderName . ' Pool Member') }}
                                                     </span>
                                                     <span class="badge bg-success">
                                                         <i class="fi-rs-star"></i>
-                                                        {{ __('Global Thrive Pool Member') }}
+                                                        {{ __($globalThriveName . ' Pool Member') }}
                                                     </span>
                                                 @elseif($customer->isGlobalThriveEligible())
                                                     <span class="badge bg-success">
                                                         <i class="fi-rs-star"></i>
-                                                        {{ __('Global Thrive Pool Member') }}
+                                                        {{ __($globalThriveName . ' Pool Member') }}
                                                     </span>
                                                 @endif
                                             </div>

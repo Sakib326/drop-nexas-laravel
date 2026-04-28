@@ -425,16 +425,7 @@
                                                             <div class="flex-grow-1">
                                                                 <div style="font-weight: 700; color: #1e293b; font-size: 0.9rem;">
                                                                     @php
-                                                                        $label = match($row->commission_type) {
-                                                                            'referral_level_1' => 'Direct Sale Bonus',
-                                                                            'referral_level_2' => 'Alliance Bonus Lvl 1',
-                                                                            'referral_level_3' => 'Alliance Bonus Lvl 2',
-                                                                            'referral_level_4' => 'Alliance Bonus Lvl 3',
-                                                                            'referral_level_5' => 'Alliance Bonus Lvl 4',
-                                                                            'referral_level_6' => 'Alliance Bonus Lvl 5',
-                                                                            'referral_level_7_plus' => 'Alliance Bonus Lvl 6+',
-                                                                            default => ucwords(str_replace('_', ' ', $row->commission_type)),
-                                                                        };
+                                                                        $label = App\Helpers\LevelConfigHelper::getCommissionLabel($row->commission_type);
                                                                     @endphp
                                                                     {{ $label }}
                                                                 </div>

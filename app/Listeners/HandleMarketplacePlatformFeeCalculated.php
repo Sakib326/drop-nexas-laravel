@@ -3,9 +3,9 @@
 namespace App\Listeners;
 
 use App\Events\MarketplacePlatformFeeCalculated;
+use App\Helpers\LevelConfigHelper;
 use App\Models\AffiliateCommission;
 use App\Models\CommissionDistributionLog;
-use App\Services\CommissionService;
 use Botble\Ecommerce\Models\Customer;
 use Botble\Ecommerce\Models\Order;
 use Illuminate\Support\Facades\DB;
@@ -393,56 +393,16 @@ class HandleMarketplacePlatformFeeCalculated
                 'pathfinder_pool',
                 'galaxy_pulse_pool',
             ],
-            'levels' => [
-                1 => ['name' => 'Spark', 'threshold' => 0, 'slug' => 'spark'],
-                2 => ['name' => 'Flare', 'threshold' => 10000, 'slug' => 'flare'],
-                3 => ['name' => 'Blaze', 'threshold' => 30000, 'slug' => 'blaze'],
-                4 => ['name' => 'Pathfinder', 'threshold' => 70000, 'slug' => 'pathfinder'],
-                5 => ['name' => 'Global Thrive', 'threshold' => 1000000, 'slug' => 'global_thrive'],
-                6 => ['name' => 'Galaxy Pulse', 'threshold' => 10000000, 'slug' => 'galaxy_pulse'],
-                7 => ['name' => 'Empire Builder', 'threshold' => 100000000, 'slug' => 'empire_builder'],
-            ],
-            'referral' => [
-                'direct_levels_max' => 6,
-                'level_rates' => CommissionService::REFERRAL_COMMISSIONS,
-                'requires_affiliate_approval' => true,
-                'commission_type_pattern' => 'referral_level_%d',
-                'level_7_plus_context_key' => 'level7_plus_users',
-            ],
-            'pools' => [
-                'level_7_plus_pool' => [
-                    'percentage' => CommissionService::LEVEL_7_PLUS_COMMISSION,
-                    'commission_type' => 'referral_level_7_plus',
-                    'users_context_key' => 'level7_plus_users',
-                ],
-                'global_thrive_pool' => [
-                    'percentage' => CommissionService::GLOBAL_THRIVE_POOL,
-                    'commission_type' => 'global_thrive_pool',
-                    'eligible_level_slugs' => ['global_thrive'],
-                ],
-                'empire_builder_pool' => [
-                    'percentage' => CommissionService::EMPIRE_BUILDER_POOL,
-                    'commission_type' => 'empire_builder_pool',
-                    'eligible_level_slugs' => ['empire_builder'],
-                ],
-                'pathfinder_pool' => [
-                    'percentage' => 2,
-                    'commission_type' => 'pathfinder_pool',
-                    'eligible_level_slugs' => ['pathfinder'],
-                ],
-                'galaxy_pulse_pool' => [
-                    'percentage' => 1,
-                    'commission_type' => 'galaxy_pulse_pool',
-                    'eligible_level_slugs' => ['galaxy_pulse'],
-                ],
-            ],
+            'levels' => LevelConfigHelper::getLevels(),
+            'referral' => LevelConfigHelper::getReferralConfig(),
+            'pools' => LevelConfigHelper::getPoolConfig(),
         ];
     }
 
     protected function normalizeLevelsConfig(array $levels): array
     {
         if ($levels === []) {
-            $levels = CommissionService::LEVELS;
+            $levels = LevelConfigHelper::getLevels();
         }
 
         $normalizedLevels = [];
@@ -475,46 +435,86 @@ class HandleMarketplacePlatformFeeCalculated
         $customer = Customer::find($data['customer_id']);
 
         if ($customer) {
-            $customer->increment('lifetime_earnings', $data['commission_amount']);
+            Log::info("Updating customer earnings and level", [
+                'customer_id' => $data['customer_id'],
+                'commission_amount' => $data['commission_amount'],
+                'status' => $data['status'],
+                'before_lifetime_earnings' => $customer->lifetime_earnings,
+                'before_level' => $customer->level,
+                'before_level_name' => $customer->level_name,
+            ]);
+
+            // Update earnings
+            $customer->lifetime_earnings += $data['commission_amount'];
 
             if ($data['status'] === 'approved') {
-                $customer->increment('available_balance', $data['commission_amount']);
-                $customer->increment('total_earned', $data['commission_amount']);
+                $customer->available_balance += $data['commission_amount'];
+                $customer->total_earned += $data['commission_amount'];
             }
 
+            // Calculate and update level
             $this->updateCustomerLevel($customer);
+
+            Log::info("Customer earnings and level updated", [
+                'customer_id' => $data['customer_id'],
+                'after_lifetime_earnings' => $customer->lifetime_earnings,
+                'after_level' => $customer->level,
+                'after_level_name' => $customer->level_name,
+            ]);
+        } else {
+            Log::warning("Customer not found for commission update", ['customer_id' => $data['customer_id']]);
         }
     }
 
+    /**
+     * Update customer level based on lifetime earnings
+     */
     public function updateCustomerLevel(Customer $customer): void
     {
-        $earnings = $customer->lifetime_earnings;
-        $newLevel = 1;
-        $newLevelName = 'Spark';
-        $normalizedLevels = $this->normalizeLevelsConfig($this->distributionConfig()['levels'] ?? []);
+        $levels = LevelConfigHelper::getLevels();
+        $desiredLevel = $this->calculateLevel($customer->lifetime_earnings, $levels);
+        $desiredLevelName = LevelConfigHelper::getLevelName($desiredLevel);
 
-        if ($normalizedLevels === []) {
-            $normalizedLevels = CommissionService::LEVELS;
+        if ((int) $customer->level === $desiredLevel && (string) $customer->level_name === $desiredLevelName) {
+            Log::info("No level update needed for customer #{$customer->id}", [
+                'current_level' => $customer->level,
+                'desired_level' => $desiredLevel,
+            ]);
+            return;
         }
 
-        krsort($normalizedLevels);
+        Log::info("Updating level for customer #{$customer->id}", [
+            'from_level' => $customer->level,
+            'to_level' => $desiredLevel,
+            'from_name' => $customer->level_name,
+            'to_name' => $desiredLevelName,
+        ]);
 
-        foreach ($normalizedLevels as $level => $data) {
-            if ($earnings >= (float) $data['threshold']) {
-                $newLevel = $level;
-                $newLevelName = (string) $data['name'];
-                break;
+        $customer->forceFill([
+            'level' => $desiredLevel,
+            'level_name' => $desiredLevelName,
+        ])->save();
+
+        Log::info("Level updated successfully for customer #{$customer->id}");
+    }
+
+    /**
+     * Calculate level based on earnings
+     */
+    protected function calculateLevel(float $earnings, array $levels): int
+    {
+        // Sort levels in reverse order by their numeric key
+        $levelKeys = array_keys($levels);
+        rsort($levelKeys);
+
+        foreach ($levelKeys as $levelKey) {
+            $levelData = $levels[$levelKey];
+            if ($earnings >= ($levelData['threshold'] ?? 0)) {
+                return (int) $levelKey;
             }
         }
 
-        if ($customer->level !== $newLevel) {
-            $customer->update([
-                'level' => $newLevel,
-                'level_name' => $newLevelName,
-            ]);
-
-            Log::info("Customer #{$customer->id} upgraded to level {$newLevel}: {$newLevelName}");
-        }
+        return 1;
     }
 
     protected function logDistributionSummary(array $context, float $totalDistributed, int $totalRecipients, $commissions): void

@@ -11,18 +11,39 @@ class SyncCustomerLevelName
 
     public function handle(Customer $customer): void
     {
+        Log::info("SyncCustomerLevelName triggered for customer #{$customer->id}", [
+            'current_level' => $customer->level,
+            'current_level_name' => $customer->level_name,
+            'lifetime_earnings' => $customer->lifetime_earnings,
+        ]);
+
         $levels = $this->getLevelsFromConfig();
         $desiredLevel = $this->calculateLevel($customer->lifetime_earnings, $levels);
         $desiredLevelName = $this->getLevelName($desiredLevel, $levels);
 
+        Log::info("Calculated level for customer #{$customer->id}", [
+            'desired_level' => $desiredLevel,
+            'desired_level_name' => $desiredLevelName,
+        ]);
+
         if ((int) $customer->level === $desiredLevel && (string) $customer->level_name === $desiredLevelName) {
+            Log::info("No level update needed for customer #{$customer->id}");
             return;
         }
+
+        Log::info("Updating level for customer #{$customer->id}", [
+            'from_level' => $customer->level,
+            'to_level' => $desiredLevel,
+            'from_name' => $customer->level_name,
+            'to_name' => $desiredLevelName,
+        ]);
 
         $customer->forceFill([
             'level' => $desiredLevel,
             'level_name' => $desiredLevelName,
         ])->saveQuietly();
+
+        Log::info("Level updated successfully for customer #{$customer->id}");
     }
 
     protected function getLevelsFromConfig(): array
@@ -30,31 +51,19 @@ class SyncCustomerLevelName
         $configPath = base_path(self::DISTRIBUTION_CONFIG_PATH);
 
         if (! is_readable($configPath)) {
-            Log::warning('Commission distribution config file not readable.', [
-                'path' => $configPath,
-            ]);
-
-            return $this->getDefaultLevels();
+            throw new \RuntimeException("Commission distribution config file not readable: {$configPath}");
         }
 
         $content = file_get_contents($configPath);
 
         if ($content === false) {
-            Log::warning('Commission distribution config file could not be read.', [
-                'path' => $configPath,
-            ]);
-
-            return $this->getDefaultLevels();
+            throw new \RuntimeException("Commission distribution config file could not be read: {$configPath}");
         }
 
         $decoded = json_decode($content, true);
 
         if (! is_array($decoded) || ! isset($decoded['levels'])) {
-            Log::warning('Commission distribution config is invalid or missing levels.', [
-                'path' => $configPath,
-            ]);
-
-            return $this->getDefaultLevels();
+            throw new \RuntimeException("Commission distribution config is invalid or missing levels: {$configPath}");
         }
 
         return $decoded['levels'];
@@ -82,48 +91,6 @@ class SyncCustomerLevelName
         if (isset($levels[$levelKey])) {
             return $levels[$levelKey]['name'] ?? 'Spark';
         }
-
         return 'Spark';
-    }
-
-    protected function getDefaultLevels(): array
-    {
-        return [
-            '1' => [
-                'slug' => 'spark',
-                'name' => 'Spark',
-                'threshold' => 0,
-            ],
-            '2' => [
-                'slug' => 'flare',
-                'name' => 'Flare',
-                'threshold' => 10000,
-            ],
-            '3' => [
-                'slug' => 'blaze',
-                'name' => 'Blaze',
-                'threshold' => 30000,
-            ],
-            '4' => [
-                'slug' => 'pathfinder',
-                'name' => 'Pathfinder',
-                'threshold' => 70000,
-            ],
-            '5' => [
-                'slug' => 'global_thrive',
-                'name' => 'Global Thrive',
-                'threshold' => 1000000,
-            ],
-            '6' => [
-                'slug' => 'galaxy_pulse',
-                'name' => 'Galaxy Pulse',
-                'threshold' => 10000000,
-            ],
-            '7' => [
-                'slug' => 'empire_builder',
-                'name' => 'Empire Builder',
-                'threshold' => 100000000,
-            ],
-        ];
     }
 }

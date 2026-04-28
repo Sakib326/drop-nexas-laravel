@@ -73,64 +73,6 @@ class Order extends BaseModel
         });
 
         static::creating(fn (Order $order) => $order->code = static::generateUniqueCode());
-
-        // Commission distribution on order completion
-        static::updated(function (Order $order) {
-            $commissionService = app(\App\Services\CommissionService::class);
-
-            // Get the original status before the update (as string)
-            $originalStatus = (string) $order->getOriginal('status', '');
-            $newStatus = (string) $order->status;
-            $isDistributed = (bool) $order->is_commission_distributed;
-
-            \Illuminate\Support\Facades\Log::info("Order #{$order->id} DEBUG (updated hook):", [
-                'original_status' => $originalStatus,
-                'new_status' => $newStatus,
-                'is_commission_distributed' => $isDistributed,
-                'OrderStatusEnum::COMPLETED' => (string) OrderStatusEnum::COMPLETED,
-            ]);
-
-            // Check if status changed to "completed"
-            if ($originalStatus != OrderStatusEnum::COMPLETED && $newStatus == OrderStatusEnum::COMPLETED) {
-                if (!$isDistributed) {
-                    try {
-                        \Illuminate\Support\Facades\Log::info("Order #{$order->id} STATUS MATCH: Status changed to completed, attempting distribution.");
-                        $commissionService->distributeCommissions($order);
-                    } catch (\Exception $e) {
-                        \Illuminate\Support\Facades\Log::error("Failed to distribute commissions for order #{$order->id}: " . $e->getMessage());
-                    }
-                } else {
-                    \Illuminate\Support\Facades\Log::info("Order #{$order->id} SKIP: Commission already distributed.");
-                }
-            } else {
-                \Illuminate\Support\Facades\Log::info("Order #{$order->id} NO STATUS MATCH: Condition (original != completed && new == completed) not met.");
-            }
-
-            // Check if status changed FROM "completed" to something else
-            if ($originalStatus == OrderStatusEnum::COMPLETED && $newStatus != OrderStatusEnum::COMPLETED) {
-                if ($isDistributed) {
-                    try {
-                        \Illuminate\Support\Facades\Log::info("Order #{$order->id} REVERSE TRIGGER: Status changed FROM completed, attempting reversal.");
-                        $commissionService->reverseCommissions($order);
-                    } catch (\Exception $e) {
-                        \Illuminate\Support\Facades\Log::error("Failed to reverse commissions for order #{$order->id}: " . $e->getMessage());
-                    }
-                }
-            }
-        });
-
-        // Handle orders created as completed
-        static::created(function (Order $order) {
-            if ($order->status == OrderStatusEnum::COMPLETED && !$order->is_commission_distributed) {
-                try {
-                    $commissionService = app(\App\Services\CommissionService::class);
-                    \Illuminate\Support\Facades\Log::info("Order #{$order->id} created as completed, distributing commissions");
-                    $commissionService->distributeCommissions($order);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Failed to distribute commissions for new order #{$order->id}: " . $e->getMessage());
-                }
-            }
-        });
     }
 
     public function user(): BelongsTo

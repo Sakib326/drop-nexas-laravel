@@ -2,6 +2,7 @@
 
 namespace Botble\Ecommerce\Models;
 
+use App\Helpers\LevelConfigHelper;
 use Botble\Base\Facades\MacroableModels;
 use Botble\Base\Models\BaseModel;
 use Botble\Base\Models\BaseQueryBuilder;
@@ -250,15 +251,7 @@ class Customer extends BaseModel implements
      */
     public function getLevelBadgeColor(): string
     {
-        return match($this->level) {
-            1 => 'secondary',  // Spark
-            2 => 'info',       // Flare
-            3 => 'primary',    // Pathfinder
-            4 => 'success',    // Global Thrive
-            5 => 'warning',    // Galaxy Pulse
-            6 => 'danger',     // Empire Builder
-            default => 'secondary',
-        };
+        return LevelConfigHelper::getLevelBadgeColor($this->level);
     }
 
     /**
@@ -266,7 +259,7 @@ class Customer extends BaseModel implements
      */
     public function isGlobalThriveEligible(): bool
     {
-        return in_array($this->level, [4, 5, 6]);
+        return LevelConfigHelper::isEligibleForPool($this->level, 'global_thrive_pool');
     }
 
     /**
@@ -274,7 +267,7 @@ class Customer extends BaseModel implements
      */
     public function isEmpireBuilderEligible(): bool
     {
-        return $this->level === 6;
+        return LevelConfigHelper::isEligibleForPool($this->level, 'empire_builder_pool');
     }
 
     /**
@@ -282,15 +275,7 @@ class Customer extends BaseModel implements
      */
     public function getNextLevelThreshold(): ?float
     {
-        $levels = [
-            1 => 100000,
-            2 => 1000000,
-            3 => 10000000,
-            4 => 100000000,
-            5 => 1000000000,
-        ];
-
-        return $levels[$this->level] ?? null;
+        return LevelConfigHelper::getLevelThreshold($this->level + 1);
     }
 
     /**

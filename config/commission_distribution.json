@@ -7,6 +7,20 @@
         "galaxy_pulse_pool",
         "empire_builder_pool"
     ],
+    "commission_labels": {
+        "referral_level_1": "Direct Sale Bonus",
+        "referral_level_2": "Alliance Bonus Lvl 1",
+        "referral_level_3": "Alliance Bonus Lvl 2",
+        "referral_level_4": "Alliance Bonus Lvl 3",
+        "referral_level_5": "Alliance Bonus Lvl 4",
+        "referral_level_6": "Alliance Bonus Lvl 5",
+        "referral_level_7_plus": "Alliance Bonus Lvl 6+",
+        "global_thrive_pool": "Global Thrive Pool",
+        "pathfinder_pool": "Pathfinder Pool",
+        "galaxy_pulse_pool": "Galaxy Pulse Pool",
+        "empire_builder_pool": "Empire Builder Pool",
+        "level_7_plus_pool": "Level 7+ Pool"
+    },
     "levels": {
         "1": {
             "slug": "spark",
@@ -21,27 +35,27 @@
         "3": {
             "slug": "blaze",
             "name": "Blaze",
-            "threshold": 30000
+            "threshold": 40000
         },
         "4": {
             "slug": "pathfinder",
             "name": "Pathfinder",
-            "threshold": 70000
+            "threshold": 110000
         },
         "5": {
             "slug": "global_thrive",
             "name": "Global Thrive",
-            "threshold": 1000000
+            "threshold": 1110000
         },
         "6": {
             "slug": "galaxy_pulse",
             "name": "Galaxy Pulse",
-            "threshold": 10000000
+            "threshold": 11110000
         },
         "7": {
             "slug": "empire_builder",
             "name": "Empire Builder",
-            "threshold": 100000000
+            "threshold": 111110000
         }
     },
     "referral": {

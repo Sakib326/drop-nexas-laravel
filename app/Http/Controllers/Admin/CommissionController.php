@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\LevelConfigHelper;
 use App\Http\Controllers\Controller;
 use Botble\Ecommerce\Models\Customer;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class CommissionController extends Controller
     public function dashboard(Request $request)
     {
         $dateFrom = $request->filled('date_from') ? $request->date_from : now()->startOfMonth()->toDateString();
-        $dateTo   = $request->filled('date_to')   ? $request->date_to   : now()->toDateString();
+        $dateTo   = $request->filled('date_to') ? $request->date_to : now()->toDateString();
 
         // --- Commission stats (date-filtered) ---
         $commissionQuery = DB::table('affiliate_commissions')
@@ -115,18 +116,9 @@ class CommissionController extends Controller
         $chartTypeData = $commissionBreakdown->map(function ($item) use ($colorMap) {
             $type = $item->commission_type;
             $color = $colorMap[$type] ?? (str_contains($type, 'reversal') ? $colorMap['reversal'] : $colorMap['others']);
-            
-            // Map common labels to user-friendly names
-            $label = match($type) {
-                'referral_level_1' => 'Direct Sale Bonus',
-                'referral_level_2' => 'Alliance Bonus Lvl 1',
-                'referral_level_3' => 'Alliance Bonus Lvl 2',
-                'referral_level_4' => 'Alliance Bonus Lvl 3',
-                'referral_level_5' => 'Alliance Bonus Lvl 4',
-                'referral_level_6' => 'Alliance Bonus Lvl 5',
-                'referral_level_7_plus' => 'Alliance Bonus Lvl 6+',
-                default => ucwords(str_replace('_', ' ', $type)),
-            };
+
+            // Map commission types to user-friendly names using JSON config
+            $label = $this->getCommissionTypeLabel($type);
 
             return [
                 'label' => $label,
@@ -135,14 +127,17 @@ class CommissionController extends Controller
             ];
         });
 
-        $chartTrendData = $dailyTrend->sortBy('date')->map(fn($item) => [
+        $chartTrendData = $dailyTrend->sortBy('date')->map(fn ($item) => [
             'date' => \Carbon\Carbon::parse($item->date)->format('d M'),
             'value' => (float)$item->total
         ])->values();
 
         return view('admin.commissions.dashboard', compact(
-            'dateFrom', 'dateTo',
-            'totalCommissionsDistributed', 'totalCommissionRecords', 'activeAffiliates',
+            'dateFrom',
+            'dateTo',
+            'totalCommissionsDistributed',
+            'totalCommissionRecords',
+            'activeAffiliates',
             'commissionBreakdown',
             'cashoutStats',
             'topEarners',
@@ -422,5 +417,13 @@ class CommissionController extends Controller
         ];
 
         return view('admin.commissions.user-balance', compact('customer', 'withdrawals', 'recentCommissions', 'balanceBreakdown'));
+    }
+
+    /**
+     * Get user-friendly label for commission type from JSON config
+     */
+    protected function getCommissionTypeLabel(string $type): string
+    {
+        return LevelConfigHelper::getCommissionLabel($type);
     }
 }
