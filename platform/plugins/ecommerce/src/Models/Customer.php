@@ -288,16 +288,13 @@ class Customer extends BaseModel implements
             return null; // Already at max level
         }
 
-        $currentThreshold = match($this->level) {
-            1 => 0,
-            2 => 100000,
-            3 => 1000000,
-            4 => 10000000,
-            5 => 100000000,
-            default => 0,
-        };
+        $currentThreshold = LevelConfigHelper::getLevelThreshold($this->level);
 
         $range = $nextThreshold - $currentThreshold;
+        if ($range <= 0) {
+            return 100;
+        }
+
         $progress = $this->lifetime_earnings - $currentThreshold;
 
         return min(100, max(0, ($progress / $range) * 100));
