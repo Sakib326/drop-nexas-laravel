@@ -73,7 +73,7 @@
             'marketplace_commission_fee',
             $product ? $product->marketplace_commission_fee : $originalProduct->marketplace_commission_fee ?? null,
         )"
-            :placeholder="__('Leave blank to use category/default commission')" type="number" min="0" max="100" step="0.01" :readonly="$isVendorProductForm"
+            :placeholder="__('Leave blank to use category/default commission')" type="number" min="0" max="100" step="0.000001" :readonly="$isVendorProductForm"
             :helper-text="$isVendorProductForm
                 ? __('Only admin can change this value.')
                 : __('Overrides category/default commission for this product.')" />
@@ -486,7 +486,7 @@
                 }
 
                 const percent = (amount * 100) / price;
-                $percentInput.val(percent.toFixed(2));
+                $percentInput.val(percent.toFixed(6));
             };
 
             const initCommissionHelpers = () => {

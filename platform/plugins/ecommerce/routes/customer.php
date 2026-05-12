@@ -9,6 +9,7 @@ use Botble\Ecommerce\Http\Controllers\Fronts\AccountDeletionController;
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CommissionController;
+use App\Http\Controllers\Admin\CommissionDistributionLogController;
 use App\Http\Controllers\Admin\WithdrawalController;
 
 AdminHelper::registerRoutes(
@@ -20,6 +21,10 @@ AdminHelper::registerRoutes(
             Route::get('/user/{customerId}/history', [CommissionController::class, 'userCommissions'])->name('user-history');
             Route::get('/user/{customerId}/hierarchy', [CommissionController::class, 'userHierarchy'])->name('user-hierarchy');
             Route::get('/user/{customerId}/balance', [CommissionController::class, 'userBalance'])->name('user-balance');
+        });
+
+        Route::group(['prefix' => 'commission-distribution-logs', 'as' => 'admin.commission-distribution-logs.', 'permission' => 'customers.index'], function (): void {
+            Route::get('/', [CommissionDistributionLogController::class, 'index'])->name('index');
         });
 
         // Withdrawal Management Routes

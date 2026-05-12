@@ -919,6 +919,15 @@ class EcommerceServiceProvider extends ServiceProvider
                     'url' => fn () => route('admin.withdrawals.index'),
                     'permissions' => ['customers.index'],
                 ])
+                ->registerItem([
+                    'id' => 'cms-plugins-commission-distribution-logs',
+                    'priority' => 197,
+                    'parent_id' => 'cms-plugins-ecommerce',
+                    'name' => 'Distribution Logs',
+                    'icon' => 'ti ti-report-money',
+                    'url' => fn () => route('admin.commission-distribution-logs.index'),
+                    'permissions' => ['customers.index'],
+                ])
                 ->when(EcommerceHelper::isProductSpecificationEnabled(), function (DashboardMenuSupport $dashboardMenu): void {
                     $dashboardMenu
                         ->registerItem([
